@@ -15,7 +15,9 @@ void on_pushButton_message_clicked();
 //#include <QJsonDocument>
 //#include <QJsonObject>
 //#include <QJsonArray>
+#include <QStackedWidget>
 #include <QSettings>
+#include <historymanager.h>
 #include "searchform.h"
 #include "personform.h"
 #include "picturewidget.h"
@@ -29,6 +31,7 @@ void on_pushButton_message_clicked();
 #include "messageform.h"
 #include <QDebug>
 #include "datasavecontrol.h"
+#include "volumecontrol.h"
 namespace Ui {
 class AllMain;
 }
@@ -74,9 +77,6 @@ public:
 
     /*初始话音乐*/
     void setMusicList(); //初始化音乐
-
-
-
 protected:
     //绘制背景函数
     void paintEvent(QPaintEvent* event);
@@ -93,30 +93,24 @@ signals:
 
 private slots:
     void on_pushButton_close_clicked();
-
     void on_pushButton_name_clicked();
-
 //    void on_pushButton_min_clicked();
-
 //    void on_pushButton_max_clicked();
-
     void btn_bkg_min();
-
     void btn_bkg_max();
-
     void on_btnPerL_clicked();
-
     void on_btnPerR_clicked();
-
     void on_pushButton_cloth_clicked();
-
     void on_pushButton_message_clicked();
-
     void on_horizontalSlider_music_valueChanged(int value);
-
     void on_pushButton_stop_clicked(bool checked);
-
     void saveListItemsToIni();
+
+    void goToPreviousPage();
+    void goToNextPage();
+    void navigateToPage(int index);
+
+    void volumeChanged(int value);  // change the volume
 
 private:
     Ui::AllMain *ui;
@@ -149,6 +143,16 @@ private:
     QString  positionTime;//当前播放到位置
 
     DataSaveControl dataSaveControl; //数据保存ini
+
+    //goToPreviousStep
+    QStackedWidget *stackedWidget;
+    HistoryManager *historyManager;
+    int currentPageIndex;
+    QWidget* createPage(int index);
+
+    void setupStackedWidget();    //updateSource
+
+    VolumeControl *volumeControl;   //for volume
 
 };
 

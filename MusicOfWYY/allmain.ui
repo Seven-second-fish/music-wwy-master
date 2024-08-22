@@ -361,10 +361,10 @@
     <widget class="QLabel" name="label_time">
      <property name="geometry">
       <rect>
-       <x>290</x>
+       <x>279</x>
        <y>50</y>
-       <width>40</width>
-       <height>16</height>
+       <width>51</width>
+       <height>20</height>
       </rect>
      </property>
      <property name="font">
@@ -382,7 +382,7 @@
       <rect>
        <x>690</x>
        <y>50</y>
-       <width>40</width>
+       <width>51</width>
        <height>16</height>
       </rect>
      </property>
@@ -464,7 +464,7 @@
       <string/>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_voice">
+    <widget class="QPushButton" name="btn_audio">
      <property name="geometry">
       <rect>
        <x>840</x>
@@ -477,7 +477,7 @@
       <string/>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_voice2">
+    <widget class="QPushButton" name="btn_volume">
      <property name="geometry">
       <rect>
        <x>890</x>
@@ -963,7 +963,7 @@
         <x>10</x>
         <y>30</y>
         <width>761</width>
-        <height>27</height>
+        <height>29</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -2570,7 +2570,7 @@
             <x>0</x>
             <y>0</y>
             <width>141</width>
-            <height>25</height>
+            <height>26</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_17">
@@ -2635,8 +2635,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>141</width>
-            <height>25</height>
+            <width>144</width>
+            <height>26</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_18">
@@ -2702,7 +2702,7 @@
             <x>0</x>
             <y>0</y>
             <width>141</width>
-            <height>25</height>
+            <height>26</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_16">
@@ -3048,7 +3048,7 @@
         <x>11</x>
         <y>11</y>
         <width>511</width>
-        <height>54</height>
+        <height>55</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -3648,10 +3648,72 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QSlider" name="volumeSlider">
+    <property name="geometry">
+     <rect>
+      <x>888</x>
+      <y>434</y>
+      <width>35</width>
+      <height>170</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>35</width>
+      <height>170</height>
+     </size>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::StrongFocus</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"> QSlider 
+    {  
+        background-color: rgba(255,255,255,0.2);
+        min-width:5px; 
+        max-width:5px;
+        border:15px solid rgba(255,255,255,0.2); 
+    }
+     QSlider::add-page:vertical
+     {      
+       
+	    background-color: rgb(250, 250, 0);
+        width:4px;
+     }
+     QSlider::sub-page:vertical  
+    {
+        background-color: rgba(255,255,255,0.5); 
+        width:4px;
+     }
+    QSlider::groove:vertical 
+    {
+        background:transparent;
+        width:6px;
+    }
+    QSlider::handle:vertical 
+    {
+         height: 13px;
+        width:13px;
+ 
+ margin: -0 -4px; 
+	border-image: url(:/image/image/image/volumeHandle.png);
+     }</string>
+    </property>
+    <property name="maximum">
+     <number>100</number>
+    </property>
+    <property name="value">
+     <number>100</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
    <zorder>scrollArea</zorder>
    <zorder>title_Widget</zorder>
    <zorder>tabWidget</zorder>
    <zorder>widget_tail</zorder>
+   <zorder>volumeSlider</zorder>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

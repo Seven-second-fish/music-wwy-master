@@ -47,7 +47,9 @@ SOURCES += \
         rankingitem.cpp \
         searchform.cpp \
         searchitem.cpp \
-    datasavecontrol.cpp
+        datasavecontrol.cpp \
+        historymanager.cpp \
+        volumecontrol.cpp
 
 HEADERS += \
         allmain.h \
@@ -69,7 +71,9 @@ HEADERS += \
         rankingitem.h \
         searchform.h \
         searchitem.h \
-    datasavecontrol.h
+        datasavecontrol.h \
+        historymanager.h \
+        volumecontrol.h
 
 FORMS += \
         allmain.ui \

@@ -237,12 +237,12 @@ QPushButton#pushButton_bz
 	border-image:url(images/标准.png);
 }
 
-QPushButton#pushButton_voice
+QPushButton#btn_audio
 {
 	border-image:url(images/voice.png);
 }
 
-QPushButton#pushButton_voice2
+QPushButton#btn_volume
 {
 	border-image:url(images/voice2.png);
 }

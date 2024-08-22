@@ -14,6 +14,10 @@ AllMain::AllMain(QWidget *parent) :
     //初始化函数
     initializeConnections();
 
+    //updateSource
+//    setupStackedWidget();
+//    historyManager = new HistoryManager(stackedWidget);
+
     //首先去除自带的边框
     this->setWindowFlag(Qt::FramelessWindowHint);
 
@@ -47,13 +51,19 @@ AllMain::AllMain(QWidget *parent) :
 AllMain::~AllMain()
 {
     delete ui;
+    delete historyManager;
 }
 
 void AllMain::initializeConnections()
 {
-//    connect(ui->pushButton_min, SIGNAL(btnClickedSig(QString)), this, SLOT(btn_min(QString)));
-     connect(ui->pushButton_min, &QPushButton::clicked, this, &AllMain::btn_bkg_min);
-     connect(ui->pushButton_max, &QPushButton::clicked, this, &AllMain::btn_bkg_max);
+     connect(ui->pushButton_min, SIGNAL(clicked()), this, SLOT(btn_bkg_min()));
+     connect(ui->pushButton_max, SIGNAL(clicked()), this, SLOT(btn_bkg_max()));
+     connect(ui->pushButton_title_left, SIGNAL(clicked()), this, SLOT(goToPreviousPage()));
+     connect(ui->pushButton_title_right, SIGNAL(clicked()), this, SLOT(goToNextPage()));
+
+     connect(ui->btn_volume, SIGNAL(clicked()), this, SLOT(volumeChanged()));
+//     connect(volumeControl, SIGNAL(volumeChanged), this, SLOT(volumeChanged));
+
 }
 
 void AllMain::saveListItemsToIni() {
@@ -72,12 +82,91 @@ void AllMain::saveListItemsToIni() {
          "你喜欢的韩国音乐|你的雷达",
          "《The end of word》就是那么好听|时光雷达"
     };
+    //音乐
+    QStringList setMusic = {
+        "music.mp3"
+    };
 
     dataSaveControl.saveListItems("setListT1", setListT1, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setListT2_png", setListT2_png, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setListT2_txt", setListT2_txt, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setTabWidget", setTabWidget, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setGallery", setGallery, DataSaveControl::ListItems);
+}
+
+void AllMain::setupStackedWidget()
+{
+    stackedWidget = new QStackedWidget(this);
+    setCentralWidget(stackedWidget);
+}
+
+QWidget* AllMain::createPage(int index)
+{
+    QWidget *page = new QWidget;
+    if (index == 0) {
+        page->setStyleSheet("background-color: red;");
+    } else if (index == 1) {
+        page->setStyleSheet("background-color: blue;");
+    } else if (index == 2) {
+        page->setStyleSheet("background-color: green;");
+    }
+    return page;
+}
+
+void AllMain::navigateToPage(int index)
+{
+    if (index < 0 || index >= 3) return; // Assuming there are 3 pages
+    if (currentPageIndex != index) {
+        if (stackedWidget->indexOf(stackedWidget->widget(index)) == -1) {
+            // If page not already in the stack, create it
+            QWidget *page = createPage(index);
+            stackedWidget->addWidget(page);
+        }
+        currentPageIndex = index;
+        historyManager->navigateTo(index);
+    }
+}
+
+void AllMain::goToPreviousPage()
+{
+    historyManager->goToPreviousPage();
+}
+
+void AllMain::goToNextPage()
+{
+    historyManager->goToNextPage();
+}
+
+//void AllMain::updateUIWithCurrentData() {
+//    // 根据 currentIndex 更新 UI
+//    // 例如: ui->label->setText(dataList[currentIndex].toString());
+//}
+
+
+//volume
+void AllMain::volumeChanged(int value)
+{
+
+    //这里写根据滑动条变化带来的其他影响
+//    // 假设 ui->volumeLabel 是一个 QLabel，用于显示音量值
+//    ui->volumeLabel->setText(QString("Volume: %1").arg(value));
+
+//    // 如果有其他的 UI 元素需要根据音量变化进行更新，可以在这里处理
+//    // 例如，改变一个进度条的显示
+//    ui->volumeProgressBar->setValue(value);
+
+//    // 还可以根据音量值调整其他 UI 组件的状态，如使音量过低时按钮变灰等
+//    if (value == 0) {
+//        ui->muteButton->setEnabled(false); // 例如，如果音量为 0，禁用静音按钮
+//    } else {
+//        ui->muteButton->setEnabled(true);
+//    }
+
+
+    volumeControl = new VolumeControl(this);
+
+    // Set the central widget (or add to layout if needed)
+    qDebug()<<value<<"\n";
 }
 
 void AllMain::searchData()
@@ -93,6 +182,33 @@ void AllMain::searchData()
  //   setAttribute(Qt::WA_StyledBackground); //设置样式表
 }
 
+//void AllMain::returnToPreviousLevel() {
+//    if (hasPreviousPage()) {
+//        // 返回上一个页面的逻辑
+//        goToPreviousPage();
+//    }
+//    updateButtonStates();
+//}
+
+//void AllMain::jumpToNextLevel() {
+//    if (hasNextPage()) {
+//        // 跳转到下一个页面的逻辑
+//        goToNextPage();
+//    }
+//    updateButtonStates();
+//}
+
+//// 检查是否有上一个页面
+//bool AllMain::hasPreviousPage() {
+//    // 返回是否有上一个页面的逻辑
+//    return !previousPagesStack.isEmpty();
+//}
+
+//// 检查是否有下一个页面
+//bool AllMain::hasNextPage() const {
+//    // 返回是否有下一个页面的逻辑
+//    return !nextPagesStack.isEmpty();
+//}
 
 void AllMain::setListT1()
 {
@@ -737,39 +853,46 @@ void AllMain::setMusicLeft()
 
 void AllMain::setMusicList()
 {
-    player = new QMediaPlayer(this);//
-    playlist = new QMediaPlaylist(this);//
+    player = new QMediaPlayer(this);
+    playlist = new QMediaPlaylist(this);
     playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
     player->setPlaylist(playlist);
-    connect(player,&QMediaPlayer::positionChanged,[=](qint64 duration){
-            if(ui->horizontalSlider_music->isSliderDown())
-            {
-                return ;
-            }
-            ui->horizontalSlider_music->blockSignals(true);
-            ui->horizontalSlider_music->setSliderPosition(int(duration));
-            ui->horizontalSlider_music->blockSignals(false);
-            int secs = int(duration)/1000;
-            int min = secs/60; //取整
-            secs = secs%60; //剩余秒
-            positionTime=QString::asprintf("%d:%d",min,secs);
-            ui->label_time->setText(positionTime);
+    QStringList musicList = dataSaveControl.loadListItems("setMusic", DataSaveControl::ListItems);
+
+    connect(player, &QMediaPlayer::positionChanged, [=](qint64 duration){
+        if (ui->horizontalSlider_music->isSliderDown())
+        {
+            return;
+        }
+        ui->horizontalSlider_music->blockSignals(true);
+        ui->horizontalSlider_music->setSliderPosition(int(duration));
+        ui->horizontalSlider_music->blockSignals(false);
+
+        int secs = int(duration) / 1000;
+        int min = secs / 60; //取整
+        secs = secs % 60; //剩余秒
+        positionTime = QString::asprintf("%02d:%02d", min, secs);
+        ui->label_time->setText(positionTime);
     });
 
-    connect(player,&QMediaPlayer::durationChanged,[=](qint64 duration){
-             ui->horizontalSlider_music->setMaximum(int(duration));
-             int secs = int(duration)/1000;
-             int min = secs/60; //取整
-             secs = secs%60; //剩余秒
-             durationTime = QString::asprintf("%d:%d",min,secs);
-             ui->label_time_long->setText(durationTime);
+    connect(player, &QMediaPlayer::durationChanged, [=](qint64 duration){
+        ui->horizontalSlider_music->setMaximum(int(duration));
+
+        int secs = int(duration) / 1000;
+        int min = secs / 60; //取整
+        secs = secs % 60; //剩余秒
+        durationTime = QString::asprintf("%02d:%02d", min, secs);
+        ui->label_time_long->setText(durationTime);
     });
 
     //加载音乐
-     playlist->addMedia(QUrl::fromLocalFile("./music/music.mp3"));//添加文件
-     playlist->setCurrentIndex(0);
+    for(int i = 0; i < musicList.size(); ++i){
+        playlist->addMedia(QUrl::fromLocalFile("./music/"+musicList[i])); //添加文件
+    }
 
+    playlist->setCurrentIndex(0);
 }
+
 
 void AllMain::paintEvent(QPaintEvent *event)
 {
@@ -787,8 +910,7 @@ void AllMain::mousePressEvent(QMouseEvent *event)
     {
         last = event->globalPos(); //获取到按压的位置
     }
-
-//    emit btnClickedSig();  // 发出自定义点击信号
+    QWidget::mousePressEvent(event);
 }
 
 void AllMain::mouseMoveEvent(QMouseEvent *event)
@@ -801,6 +923,7 @@ void AllMain::mouseMoveEvent(QMouseEvent *event)
         last = event->globalPos();
         this->move(this->x()+dx,this->y()+dy);
     }
+    QWidget::mouseMoveEvent(event);
 
 }
 
@@ -813,7 +936,25 @@ void AllMain::mouseReleaseEvent(QMouseEvent *event)
         int dy = event->globalY() - last.y();
         this->move(this->x()+dx,this->y()+dy);
     }
+    QWidget::mouseReleaseEvent(event);
+
+//    emit btnClickedSig();  // 发出自定义点击信号,用于其他自定义组件
 }
+
+//void AllMain::mousePressEvent(QMouseEvent *event)
+//{
+//    QWidget::mousePressEvent(event);
+//}
+
+//void AllMain::mouseReleaseEvent(QMouseEvent *event)
+//{
+//    QWidget::mouseReleaseEvent(event);
+//    if(!isDisable)
+//    {
+//        setOnoffStatus(!btnState);
+//    }
+//    emit onoffStatusChanged(btnId,btnState);
+//}
 
 bool AllMain::eventFilter(QObject *watched, QEvent *event)
 {
