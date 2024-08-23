@@ -32,6 +32,9 @@ void on_pushButton_message_clicked();
 #include <QDebug>
 #include "datasavecontrol.h"
 #include "volumecontrol.h"
+#include <QTimer>
+#include <QSlider>
+#include <customslider.h>
 namespace Ui {
 class AllMain;
 }
@@ -42,7 +45,8 @@ class AllMain : public QMainWindow
 
 public:
     explicit AllMain(QWidget *parent = nullptr);
-    void initializeConnections(); //初始化函数
+    void initializeConnections(); //Initialize the connection
+    void Initializefunction();  //Initialization function
     ~AllMain();
     void searchData();
     void setListT1();  //设置推荐列表
@@ -77,6 +81,9 @@ public:
 
     /*初始话音乐*/
     void setMusicList(); //初始化音乐
+
+    // 替换 QSlider 为 CustomSlider
+    void replaceSlider();
 protected:
     //绘制背景函数
     void paintEvent(QPaintEvent* event);
@@ -88,6 +95,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event);
     //过滤器函数
     virtual bool eventFilter(QObject *watched, QEvent *event);//过滤器函数
+
+    void timerEvent(QTimerEvent *event);
 signals:
     void btnClickedSig();
 
@@ -110,7 +119,9 @@ private slots:
     void goToNextPage();
     void navigateToPage(int index);
 
-    void volumeChanged(int value);  // change the volume
+    void volume_Changed(bool toggleVisibility);  // change the volume
+
+    void audio_changed();     //change the audio
 
 private:
     Ui::AllMain *ui;
@@ -152,7 +163,13 @@ private:
 
     void setupStackedWidget();    //updateSource
 
-    VolumeControl *volumeControl;   //for volume
+    //for volume
+    VolumeControl *volumeControl;
+    QSlider *volume_slider;
+    QPushButton *btn_volume;
+    int hideSliderTimerId;  //timerEvent
+    int volumeValue;
+    QString newLevel;
 
 };
 

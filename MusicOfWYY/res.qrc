@@ -147,5 +147,12 @@
         <file>images/message/per10.png</file>
         <file>images/message/red.png</file>
         <file>images/message/per4.png</file>
+        <file>images/volumeHandle.png</file>
+        
+        <file>images/volume/voice_mute.png</file>
+        <file>images/volume/voice1.png</file>
+        <file>images/volume/voice2.png</file>
+        <file>images/volume/voice3.png</file>
+        
     </qresource>
 </RCC>

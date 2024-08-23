@@ -1028,7 +1028,7 @@
         <x>10</x>
         <y>280</y>
         <width>761</width>
-        <height>22</height>
+        <height>176</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -3648,31 +3648,46 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QSlider" name="volumeSlider">
+   <widget class="QWidget" name="title_Widget_2" native="true">
     <property name="geometry">
      <rect>
-      <x>888</x>
-      <y>434</y>
-      <width>35</width>
+      <x>885</x>
+      <y>428</y>
+      <width>41</width>
       <height>170</height>
      </rect>
     </property>
-    <property name="minimumSize">
-     <size>
-      <width>35</width>
-      <height>170</height>
-     </size>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::StrongFocus</enum>
-    </property>
-    <property name="styleSheet">
-     <string notr="true"> QSlider 
+    <widget class="QWidget" name="horizontalLayoutWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>41</width>
+       <height>172</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_volume">
+      <item>
+       <widget class="QSlider" name="volumeSlider">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>35</width>
+          <height>170</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"> QSlider 
     {  
         background-color: rgba(255,255,255,0.2);
         min-width:5px; 
         max-width:5px;
-        border:15px solid rgba(255,255,255,0.2); 
+	     border:15px solid rgba(255,255,255,0.2); 
     }
      QSlider::add-page:vertical
      {      
@@ -3696,24 +3711,28 @@
         width:13px;
  
  margin: -0 -4px; 
-	border-image: url(:/image/image/image/volumeHandle.png);
+	border-image: url(:/images/volumeHandle.png);
      }</string>
-    </property>
-    <property name="maximum">
-     <number>100</number>
-    </property>
-    <property name="value">
-     <number>100</number>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <zorder>scrollArea</zorder>
    <zorder>title_Widget</zorder>
    <zorder>tabWidget</zorder>
    <zorder>widget_tail</zorder>
-   <zorder>volumeSlider</zorder>
+   <zorder>title_Widget_2</zorder>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

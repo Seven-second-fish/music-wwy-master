@@ -242,10 +242,25 @@ QPushButton#btn_audio
 	border-image:url(images/voice.png);
 }
 
-QPushButton#btn_volume
-{
-	border-image:url(images/voice2.png);
+QPushButton#btn_volume[volumeLevel="mute"] {
+    border-image: url(images/volume/voice_mute.png);
 }
+
+QPushButton#btn_volume[volumeLevel="level1"] {
+    border-image: url(images/volume/voice1.png);
+}
+
+QPushButton#btn_volume[volumeLevel="level2"] {
+    border-image: url(images/volume/voice2.png);
+}
+
+QPushButton#btn_volume[volumeLevel="level3"] {
+    border-image: url(images/volume/voice3.png);
+}
+
+
+
+
 
 QPushButton#pushButton_listen_all
 {

@@ -1,4 +1,4 @@
-#include "HistoryManager.h"
+#include "historymanager.h"
 
 HistoryManager::HistoryManager(QStackedWidget *stackedWidget)
     : stackedWidget(stackedWidget), currentIndex(-1)

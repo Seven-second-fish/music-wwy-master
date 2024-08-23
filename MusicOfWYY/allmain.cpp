@@ -11,8 +11,15 @@ AllMain::AllMain(QWidget *parent) :
 
 //    this->adjustSize();
 
-    //初始化函数
+//    replaceSlider();
+
+    //Initialization function
+    Initializefunction();
+
+    //Initialize the connection
     initializeConnections();
+
+
 
     //updateSource
 //    setupStackedWidget();
@@ -61,10 +68,65 @@ void AllMain::initializeConnections()
      connect(ui->pushButton_title_left, SIGNAL(clicked()), this, SLOT(goToPreviousPage()));
      connect(ui->pushButton_title_right, SIGNAL(clicked()), this, SLOT(goToNextPage()));
 
-     connect(ui->btn_volume, SIGNAL(clicked()), this, SLOT(volumeChanged()));
-//     connect(volumeControl, SIGNAL(volumeChanged), this, SLOT(volumeChanged));
+     //for voice
+     connect(ui->btn_volume, &QPushButton::clicked, [this]() {
+         volume_Changed(true);
+     });
+
+     connect(ui->volumeSlider, &QSlider::valueChanged, [this]() {
+         volume_Changed(false);
+     });
+}
+
+void AllMain::Initializefunction()
+{
+    hideSliderTimerId = startTimer(0);
+
+    // 设置滑动条初始值为 0（静音）
+    volume_slider = this->findChild<QSlider *>("volumeSlider");
+    if (volume_slider) {
+        volume_slider->setValue(0);
+    }
+    // 根据滑动条的初始值设置按钮图标
+    volume_Changed(false);
+
 
 }
+
+//结合customslider类使用,用于实现点击音量进度条某处直接跳转到该位置功能,抛弃该功能
+void AllMain::replaceSlider() {
+    QSlider *slider = this->findChild<QSlider *>("volumeSlider");
+    if (!slider) {
+        qWarning() << "QSlider not found!";
+        return;
+    }
+
+    CustomSlider *customSlider = new CustomSlider(this);
+    customSlider->setOrientation(slider->orientation());
+    customSlider->setRange(slider->minimum(), slider->maximum());
+    customSlider->setValue(slider->value());
+
+    QLayout *layout = slider->parentWidget()->layout();
+    if (!layout) {
+        qWarning() << "Layout not found!";
+        delete slider;
+        return;
+    }
+
+    QWidget *parentWidget = slider->parentWidget();
+    if (!parentWidget->layout()) {
+        qWarning() << "Parent widget does not have a layout!";
+        return;
+    }
+
+
+    layout->removeWidget(slider);
+    delete slider;
+
+    layout->addWidget(customSlider);
+    ui->volumeSlider = customSlider;
+}
+
 
 void AllMain::saveListItemsToIni() {
     QStringList setListT1 = {"发现音乐", "播客", "视频", "朋友", "直播", "私人FM"};
@@ -142,31 +204,58 @@ void AllMain::goToNextPage()
 //    // 例如: ui->label->setText(dataList[currentIndex].toString());
 //}
 
-
-//volume
-void AllMain::volumeChanged(int value)
+//audio
+void AllMain::audio_changed()
 {
 
-    //这里写根据滑动条变化带来的其他影响
-//    // 假设 ui->volumeLabel 是一个 QLabel，用于显示音量值
-//    ui->volumeLabel->setText(QString("Volume: %1").arg(value));
+}
 
-//    // 如果有其他的 UI 元素需要根据音量变化进行更新，可以在这里处理
-//    // 例如，改变一个进度条的显示
-//    ui->volumeProgressBar->setValue(value);
+//volume
+void AllMain::volume_Changed(bool toggleVisibility)
+{
+    volume_slider = this->findChild<QSlider *>("volumeSlider");
+    btn_volume = this->findChild<QPushButton *>("btn_volume");
+    //提前初始化音乐
+    player = new QMediaPlayer(this);
+    if (toggleVisibility && volume_slider){
+        if(volume_slider->isVisible()){
+            volume_slider->hide();
+        }else{
+            volume_slider->show();
+        }
+    }
 
-//    // 还可以根据音量值调整其他 UI 组件的状态，如使音量过低时按钮变灰等
-//    if (value == 0) {
-//        ui->muteButton->setEnabled(false); // 例如，如果音量为 0，禁用静音按钮
-//    } else {
-//        ui->muteButton->setEnabled(true);
-//    }
+    if (volume_slider && btn_volume) {
+        volumeValue = volume_slider->value();
+        if (volumeValue == 0) {
+            newLevel = "mute";
+        } else if (volumeValue > 0 && volumeValue <= 33) {
+            newLevel = "level1";
+        } else if (volumeValue > 33 && volumeValue <= 66) {
+            newLevel = "level2";
+        } else {
+            newLevel = "level3";
+        }
+
+        // 仅当属性发生变化时，才更新属性和重新应用样式
+        if (btn_volume->property("volumeLevel") != newLevel) {
+            btn_volume->setProperty("volumeLevel", newLevel);
+
+            // 重新应用样式表
+            btn_volume->style()->unpolish(btn_volume);
+            btn_volume->style()->polish(btn_volume);
+        }
+
+        if (player) {
+            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
+        }
+
+        // 强制重绘按钮
+        btn_volume->update();
+        btn_volume->repaint();
+    }
 
 
-    volumeControl = new VolumeControl(this);
-
-    // Set the central widget (or add to layout if needed)
-    qDebug()<<value<<"\n";
 }
 
 void AllMain::searchData()
@@ -991,6 +1080,18 @@ bool AllMain::eventFilter(QObject *watched, QEvent *event)
     }
 
     return QWidget::eventFilter(watched,event);
+}
+
+void AllMain::timerEvent(QTimerEvent *event)
+{
+    if (event->timerId() == hideSliderTimerId)
+    {
+        QSlider *volume_slider = this->findChild<QSlider *>("volumeSlider");
+        if(volume_slider){
+            volume_slider->hide();
+        }
+        killTimer(hideSliderTimerId); // 一次性操作，关闭定时器
+    }
 }
 
 void AllMain::on_pushButton_close_clicked()

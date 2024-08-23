@@ -29,6 +29,7 @@ CONFIG += c++11
 
 SOURCES += \
         changecolorform.cpp \
+        customslider.cpp \
         galleryitem.cpp \
         galleryprivate.cpp \
         main.cpp \
@@ -54,6 +55,7 @@ SOURCES += \
 HEADERS += \
         allmain.h \
         changecolorform.h \
+        customslider.h \
         galleryitem.h \
         galleryprivate.h \
         loadfileqss.h \
