@@ -311,12 +311,12 @@ QPushButton::pressed#pushButton_right_music
 	border-image:url(images/下一曲1.png);
 }
 
-/*暂停*/
-QPushButton#pushButton_stop
+/*开始暂停*/
+QPushButton#btnPlayPause
 {
 	border-image:url(images/开始.png);
 }
-QPushButton::checked#pushButton_stop
+QPushButton::checked#btnPlayPause
 {
 	border-image:url(images/暂停.png);
 }

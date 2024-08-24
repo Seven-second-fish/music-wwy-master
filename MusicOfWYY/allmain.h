@@ -103,8 +103,6 @@ signals:
 private slots:
     void on_pushButton_close_clicked();
     void on_pushButton_name_clicked();
-//    void on_pushButton_min_clicked();
-//    void on_pushButton_max_clicked();
     void btn_bkg_min();
     void btn_bkg_max();
     void on_btnPerL_clicked();
@@ -112,12 +110,13 @@ private slots:
     void on_pushButton_cloth_clicked();
     void on_pushButton_message_clicked();
     void on_horizontalSlider_music_valueChanged(int value);
-    void on_pushButton_stop_clicked(bool checked);
     void saveListItemsToIni();
 
     void goToPreviousPage();
     void goToNextPage();
     void navigateToPage(int index);
+
+    void btnPlayPause(bool checked);
 
     void volume_Changed(bool toggleVisibility);  // change the volume
 

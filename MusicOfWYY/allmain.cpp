@@ -52,6 +52,9 @@ AllMain::AllMain(QWidget *parent) :
     setMusicLeft();
     //初始化音乐
     setMusicList();
+//    qDebug() << "Player is not initialized!";
+    qDebug() << "Player is not initialized!";
+    fflush(stdout);
 
 }
 
@@ -63,19 +66,25 @@ AllMain::~AllMain()
 
 void AllMain::initializeConnections()
 {
-     connect(ui->pushButton_min, SIGNAL(clicked()), this, SLOT(btn_bkg_min()));
-     connect(ui->pushButton_max, SIGNAL(clicked()), this, SLOT(btn_bkg_max()));
-     connect(ui->pushButton_title_left, SIGNAL(clicked()), this, SLOT(goToPreviousPage()));
-     connect(ui->pushButton_title_right, SIGNAL(clicked()), this, SLOT(goToNextPage()));
+//     connect(ui->pushButton_min, SIGNAL(clicked()), this, SLOT(btn_bkg_min()));
+//     connect(ui->pushButton_max, SIGNAL(clicked()), this, SLOT(btn_bkg_max()));
+//     connect(ui->pushButton_title_left, SIGNAL(clicked()), this, SLOT(goToPreviousPage()));
+//     connect(ui->pushButton_title_right, SIGNAL(clicked()), this, SLOT(goToNextPage()));
+    connect(ui->pushButton_min, &QPushButton::clicked, this, &AllMain::btn_bkg_min);
+    connect(ui->pushButton_max, &QPushButton::clicked, this, &AllMain::btn_bkg_max);
+    connect(ui->pushButton_title_left, &QPushButton::clicked, this, &AllMain::goToPreviousPage);
+    connect(ui->pushButton_title_right, &QPushButton::clicked, this, &AllMain::goToNextPage);
 
-     //for voice
-     connect(ui->btn_volume, &QPushButton::clicked, [this]() {
-         volume_Changed(true);
-     });
+    connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
 
-     connect(ui->volumeSlider, &QSlider::valueChanged, [this]() {
-         volume_Changed(false);
-     });
+    //for voice
+    connect(ui->btn_volume, &QPushButton::clicked, [this]() {
+     volume_Changed(true);
+    });
+
+    connect(ui->volumeSlider, &QSlider::valueChanged, [this]() {
+     volume_Changed(false);
+    });
 }
 
 void AllMain::Initializefunction()
@@ -216,7 +225,7 @@ void AllMain::volume_Changed(bool toggleVisibility)
     volume_slider = this->findChild<QSlider *>("volumeSlider");
     btn_volume = this->findChild<QPushButton *>("btn_volume");
     //提前初始化音乐
-    player = new QMediaPlayer(this);
+//    player = new QMediaPlayer(this);
     if (toggleVisibility && volume_slider){
         if(volume_slider->isVisible()){
             volume_slider->hide();
@@ -246,9 +255,17 @@ void AllMain::volume_Changed(bool toggleVisibility)
             btn_volume->style()->polish(btn_volume);
         }
 
-        if (player) {
-            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
-        }
+//        if (player) {
+////            qDebug() << "Setting volume to" << volumeValue;
+////            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
+//        } else {
+//            qDebug() << "Player is not initialized!";
+//        }
+
+
+//        if (player) {
+//            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
+//        }
 
         // 强制重绘按钮
         btn_volume->update();
@@ -1120,11 +1137,6 @@ void AllMain::on_pushButton_name_clicked()
     }
 }
 
-//void AllMain::on_pushButton_min_clicked()
-//{
-//    this->showMinimized(); //最小化
-//}
-
 void AllMain::btn_bkg_min()
 {
     this->showMinimized(); //最小化
@@ -1211,12 +1223,12 @@ void AllMain::on_horizontalSlider_music_valueChanged(int value)
     player->blockSignals(false);
 }
 
-void AllMain::on_pushButton_stop_clicked(bool checked)
+void AllMain::btnPlayPause(bool checked)
 {
     if(checked)
     {
         player->play();
-        this->setWindowTitle("能解答一切的答案");
+//        this->setWindowTitle("能解答一切的答案");
     }
     else {
         player->pause();
