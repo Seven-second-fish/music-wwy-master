@@ -207,19 +207,19 @@ QPushButton::pressed#pushButton_like
 }
 
 /*音乐播放条*/
-QSlider::add-page:Horizontal#horizontalSlider_music
+QSlider::add-page:Horizontal#horsliderMusic
 {
 	background-color: rgb(205,205,205);height:4px;
 }
-QSlider::sub-page:Horizontal#horizontalSlider_music
+QSlider::sub-page:Horizontal#horsliderMusic
 {
 	background-color: rgb(255,78,78);height:4px;
 }
-QSlider::handle:Horizontal#horizontalSlider_music
+QSlider::handle:Horizontal#horsliderMusic
 {
 	width:14px;border-image: url(images/point_music.png);margin:-4 px -4px;
 }
-QSlider::groove:Horizontal#horizontalSlider_music
+QSlider::groove:Horizontal#horsliderMusic
 {
 	background:rgb(0, 255, 0);height:4px;
 }

@@ -5,7 +5,8 @@
 
 AllMain::AllMain(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::AllMain)
+    ui(new Ui::AllMain),
+    player(nullptr)
 {
     ui->setupUi(this);
 
@@ -18,8 +19,6 @@ AllMain::AllMain(QWidget *parent) :
 
     //Initialize the connection
     initializeConnections();
-
-
 
     //updateSource
 //    setupStackedWidget();
@@ -52,24 +51,39 @@ AllMain::AllMain(QWidget *parent) :
     setMusicLeft();
     //初始化音乐
     setMusicList();
-//    qDebug() << "Player is not initialized!";
-    qDebug() << "Player is not initialized!";
-    fflush(stdout);
 
 }
 
 AllMain::~AllMain()
 {
     delete ui;
-    delete historyManager;
+//    delete historyManager;
+}
+
+void AllMain::Initializefunction()
+{
+//    hideSliderTimerId = startTimer(0);
+
+    // 设置滑动条初始值为 0（静音）和初始隐藏滑动条
+    volume_slider = this->findChild<QSlider *>("volumeSlider");
+    if (volume_slider) {
+        volume_slider->hide();
+        volume_slider->setValue(50);
+    }
+
+    player = new QMediaPlayer(this);
+    playlist = new QMediaPlaylist(this);
+    playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
+    player->setPlaylist(playlist);
+
+    // 根据滑动条的初始值设置按钮图标
+    // 必须放到后面，因为volume_Changed函数会调用player的实例化对象
+    volume_Changed(false);
+
 }
 
 void AllMain::initializeConnections()
 {
-//     connect(ui->pushButton_min, SIGNAL(clicked()), this, SLOT(btn_bkg_min()));
-//     connect(ui->pushButton_max, SIGNAL(clicked()), this, SLOT(btn_bkg_max()));
-//     connect(ui->pushButton_title_left, SIGNAL(clicked()), this, SLOT(goToPreviousPage()));
-//     connect(ui->pushButton_title_right, SIGNAL(clicked()), this, SLOT(goToNextPage()));
     connect(ui->pushButton_min, &QPushButton::clicked, this, &AllMain::btn_bkg_min);
     connect(ui->pushButton_max, &QPushButton::clicked, this, &AllMain::btn_bkg_max);
     connect(ui->pushButton_title_left, &QPushButton::clicked, this, &AllMain::goToPreviousPage);
@@ -79,27 +93,15 @@ void AllMain::initializeConnections()
 
     //for voice
     connect(ui->btn_volume, &QPushButton::clicked, [this]() {
-     volume_Changed(true);
+        volume_Changed(true);
     });
 
     connect(ui->volumeSlider, &QSlider::valueChanged, [this]() {
-     volume_Changed(false);
+        volume_Changed(false);
     });
-}
 
-void AllMain::Initializefunction()
-{
-    hideSliderTimerId = startTimer(0);
-
-    // 设置滑动条初始值为 0（静音）
-    volume_slider = this->findChild<QSlider *>("volumeSlider");
-    if (volume_slider) {
-        volume_slider->setValue(0);
-    }
-    // 根据滑动条的初始值设置按钮图标
-    volume_Changed(false);
-
-
+    //for muisic
+    connect(ui->horsliderMusic, &QSlider::valueChanged, this, &AllMain::horsliderMusic_changed);
 }
 
 //结合customslider类使用,用于实现点击音量进度条某处直接跳转到该位置功能,抛弃该功能
@@ -163,6 +165,7 @@ void AllMain::saveListItemsToIni() {
     dataSaveControl.saveListItems("setListT2_txt", setListT2_txt, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setTabWidget", setTabWidget, DataSaveControl::ListItems);
     dataSaveControl.saveListItems("setGallery", setGallery, DataSaveControl::ListItems);
+    dataSaveControl.saveListItems("setMusic", setMusic, DataSaveControl::ListItems);
 }
 
 void AllMain::setupStackedWidget()
@@ -255,24 +258,14 @@ void AllMain::volume_Changed(bool toggleVisibility)
             btn_volume->style()->polish(btn_volume);
         }
 
-//        if (player) {
-////            qDebug() << "Setting volume to" << volumeValue;
-////            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
-//        } else {
-//            qDebug() << "Player is not initialized!";
-//        }
-
-
-//        if (player) {
-//            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
-//        }
+        if (player) {
+            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
+        }
 
         // 强制重绘按钮
         btn_volume->update();
         btn_volume->repaint();
     }
-
-
 }
 
 void AllMain::searchData()
@@ -959,20 +952,16 @@ void AllMain::setMusicLeft()
 
 void AllMain::setMusicList()
 {
-    player = new QMediaPlayer(this);
-    playlist = new QMediaPlaylist(this);
-    playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
-    player->setPlaylist(playlist);
     QStringList musicList = dataSaveControl.loadListItems("setMusic", DataSaveControl::ListItems);
 
     connect(player, &QMediaPlayer::positionChanged, [=](qint64 duration){
-        if (ui->horizontalSlider_music->isSliderDown())
+        if (ui->horsliderMusic->isSliderDown())
         {
             return;
         }
-        ui->horizontalSlider_music->blockSignals(true);
-        ui->horizontalSlider_music->setSliderPosition(int(duration));
-        ui->horizontalSlider_music->blockSignals(false);
+        ui->horsliderMusic->blockSignals(true);
+        ui->horsliderMusic->setSliderPosition(int(duration));
+        ui->horsliderMusic->blockSignals(false);
 
         int secs = int(duration) / 1000;
         int min = secs / 60; //取整
@@ -982,7 +971,7 @@ void AllMain::setMusicList()
     });
 
     connect(player, &QMediaPlayer::durationChanged, [=](qint64 duration){
-        ui->horizontalSlider_music->setMaximum(int(duration));
+        ui->horsliderMusic->setMaximum(int(duration));
 
         int secs = int(duration) / 1000;
         int min = secs / 60; //取整
@@ -993,10 +982,23 @@ void AllMain::setMusicList()
 
     //加载音乐
     for(int i = 0; i < musicList.size(); ++i){
-        playlist->addMedia(QUrl::fromLocalFile("./music/"+musicList[i])); //添加文件
+//        playlist->addMedia(QUrl::fromLocalFile("./music/"+musicList[i])); //Add files
+//        player->setMedia(QUrl::fromLocalFile(QFileInfo(QString("./music/"+musicList[i])).absoluteFilePath()));
+          loadMusic(player, playlist, "./music/" + musicList[i]);
     }
 
     playlist->setCurrentIndex(0);
+}
+
+//Invocation based on system judgment
+void AllMain::loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QString& filePath) {
+#ifdef Q_OS_WIN
+    playlist->addMedia(QUrl::fromLocalFile(filePath));
+#elif defined(Q_OS_LINUX)
+    player->setMedia(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()));
+#else
+    qDebug() << "Unsupported OS";
+#endif
 }
 
 
@@ -1101,14 +1103,14 @@ bool AllMain::eventFilter(QObject *watched, QEvent *event)
 
 void AllMain::timerEvent(QTimerEvent *event)
 {
-    if (event->timerId() == hideSliderTimerId)
-    {
-        QSlider *volume_slider = this->findChild<QSlider *>("volumeSlider");
-        if(volume_slider){
-            volume_slider->hide();
-        }
-        killTimer(hideSliderTimerId); // 一次性操作，关闭定时器
-    }
+//    if (event->timerId() == hideSliderTimerId)
+//    {
+//        QSlider *volume_slider = this->findChild<QSlider *>("volumeSlider");
+//        if(volume_slider){
+//            volume_slider->hide();
+//        }
+//        killTimer(hideSliderTimerId); // 一次性操作，关闭定时器
+//    }
 }
 
 void AllMain::on_pushButton_close_clicked()
@@ -1214,13 +1216,11 @@ void AllMain::on_pushButton_message_clicked()
 
 }
 
-
-
-void AllMain::on_horizontalSlider_music_valueChanged(int value)
+void AllMain::horsliderMusic_changed(int value)
 {
-    player->blockSignals(true);
-    player->setPosition(value);
-    player->blockSignals(false);
+        player->blockSignals(true);
+        player->setPosition(value);
+        player->blockSignals(false);
 }
 
 void AllMain::btnPlayPause(bool checked)

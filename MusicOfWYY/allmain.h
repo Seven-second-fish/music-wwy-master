@@ -1,4 +1,4 @@
-void on_horizontalSlider_music_valueChanged(int value);
+//void on_horizontalSlider_music_valueChanged(int value);
 void on_pushButton_message_clicked();
 #ifndef ALLMAIN_H
 #define ALLMAIN_H
@@ -35,6 +35,7 @@ void on_pushButton_message_clicked();
 #include <QTimer>
 #include <QSlider>
 #include <customslider.h>
+#include <QFileInfo>
 namespace Ui {
 class AllMain;
 }
@@ -47,6 +48,8 @@ public:
     explicit AllMain(QWidget *parent = nullptr);
     void initializeConnections(); //Initialize the connection
     void Initializefunction();  //Initialization function
+    //Invocation based on system judgment
+    void loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QString& filePath);
     ~AllMain();
     void searchData();
     void setListT1();  //设置推荐列表
@@ -109,7 +112,7 @@ private slots:
     void on_btnPerR_clicked();
     void on_pushButton_cloth_clicked();
     void on_pushButton_message_clicked();
-    void on_horizontalSlider_music_valueChanged(int value);
+//    void on_horizontalSlider_music_valueChanged(int value);
     void saveListItemsToIni();
 
     void goToPreviousPage();
@@ -121,6 +124,8 @@ private slots:
     void volume_Changed(bool toggleVisibility);  // change the volume
 
     void audio_changed();     //change the audio
+
+    void horsliderMusic_changed(int value);  //for music
 
 private:
     Ui::AllMain *ui;
@@ -166,7 +171,7 @@ private:
     VolumeControl *volumeControl;
     QSlider *volume_slider;
     QPushButton *btn_volume;
-    int hideSliderTimerId;  //timerEvent
+//    int hideSliderTimerId;  //timerEvent
     int volumeValue;
     QString newLevel;
 
