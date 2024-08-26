@@ -14,11 +14,7 @@ AllMain::AllMain(QWidget *parent) :
 
 //    replaceSlider();
 
-    //Initialization function
-    Initializefunction();
-
-    //Initialize the connection
-    initializeConnections();
+    init();
 
     //updateSource
 //    setupStackedWidget();
@@ -49,8 +45,6 @@ AllMain::AllMain(QWidget *parent) :
     setNewMusicChooseButton();
     /*左下角模块*/
     setMusicLeft();
-    //初始化音乐
-    setMusicList();
 
 }
 
@@ -58,50 +52,74 @@ AllMain::~AllMain()
 {
     delete ui;
 //    delete historyManager;
+    monitor->stopMonitoring();
 }
 
-void AllMain::Initializefunction()
-{
-//    hideSliderTimerId = startTimer(0);
-
-    // 设置滑动条初始值为 0（静音）和初始隐藏滑动条
-    volume_slider = this->findChild<QSlider *>("volumeSlider");
-    if (volume_slider) {
-        volume_slider->hide();
-        volume_slider->setValue(50);
-    }
-
-    player = new QMediaPlayer(this);
-    playlist = new QMediaPlaylist(this);
-    playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
-    player->setPlaylist(playlist);
-
-    // 根据滑动条的初始值设置按钮图标
-    // 必须放到后面，因为volume_Changed函数会调用player的实例化对象
-    volume_Changed(false);
-
-}
-
-void AllMain::initializeConnections()
+void AllMain::init()
 {
     connect(ui->pushButton_min, &QPushButton::clicked, this, &AllMain::btn_bkg_min);
     connect(ui->pushButton_max, &QPushButton::clicked, this, &AllMain::btn_bkg_max);
     connect(ui->pushButton_title_left, &QPushButton::clicked, this, &AllMain::goToPreviousPage);
     connect(ui->pushButton_title_right, &QPushButton::clicked, this, &AllMain::goToNextPage);
 
+    //for music
+    player = new QMediaPlayer(this);
+    playlist = new QMediaPlaylist(this);
+    playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
+    player->setPlaylist(playlist);
     connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
 
+    //调整状态，滑动时屏蔽player的信号发出，松开时解锁
+    connect(ui->horsliderMusic, &QSlider::sliderPressed, [this]() {
+        player->blockSignals(true);
+    });
+    connect(ui->horsliderMusic, &QSlider::sliderReleased, [this]() {
+        player->blockSignals(false);
+        horsliderMusic_changed(ui->horsliderMusic->value());
+    });
+    //初始化音乐
+    setMusicList();
+
     //for voice
-    connect(ui->btn_volume, &QPushButton::clicked, [this]() {
+    volume_slider = this->findChild<QSlider *>("volumeSlider");
+    btn_volume = this->findChild<QPushButton *>("btn_volume");
+    if (volume_slider) {
+        volume_slider->hide();
+//        volume_slider->setValue(50);
+        updateVolumeUI(50);
+    }
+    hideSliderTimer = new QTimer(this);
+    hideSliderTimer->setInterval(2000);
+    hideSliderTimer->setSingleShot(true);
+    connect(hideSliderTimer, &QTimer::timeout, this, [this]() {
+        volume_slider->hide();
+    });
+    volume_slider->installEventFilter(this);
+
+    connect(btn_volume, &QPushButton::clicked, [this]() {
         volume_Changed(true);
     });
 
-    connect(ui->volumeSlider, &QSlider::valueChanged, [this]() {
-        volume_Changed(false);
+    connect(volume_slider, &QSlider::valueChanged, [this]() {
+        if (!isSystemVolumeChange) {
+            int volumeValue = volume_slider->value();
+            volume_Changed(volumeValue);
+            // 如果是手动调整滑块，更新系统音量
+//            setSystemVolume(volumeValue);
+        }
     });
 
-    //for muisic
-    connect(ui->horsliderMusic, &QSlider::valueChanged, this, &AllMain::horsliderMusic_changed);
+    //启用监控系统音量,似乎不生效
+    monitor = new VolumeMonitor(this);
+    monitor->startMonitoring();
+    connect(monitor, &VolumeMonitor::systemVolumeChanged, [this](int newVolume) {
+        isSystemVolumeChange = true;
+        volume_Changed(newVolume);
+        isSystemVolumeChange = false;
+    });
+
+    //for audio
+
 }
 
 //结合customslider类使用,用于实现点击音量进度条某处直接跳转到该位置功能,抛弃该功能
@@ -156,16 +174,16 @@ void AllMain::saveListItemsToIni() {
          "《The end of word》就是那么好听|时光雷达"
     };
     //音乐
-    QStringList setMusic = {
-        "music.mp3"
-    };
+//    QStringList setMusic = {
+//        "music.mp3"
+//    };
 
-    dataSaveControl.saveListItems("setListT1", setListT1, DataSaveControl::ListItems);
-    dataSaveControl.saveListItems("setListT2_png", setListT2_png, DataSaveControl::ListItems);
-    dataSaveControl.saveListItems("setListT2_txt", setListT2_txt, DataSaveControl::ListItems);
-    dataSaveControl.saveListItems("setTabWidget", setTabWidget, DataSaveControl::ListItems);
-    dataSaveControl.saveListItems("setGallery", setGallery, DataSaveControl::ListItems);
-    dataSaveControl.saveListItems("setMusic", setMusic, DataSaveControl::ListItems);
+    dataSaveControl->saveListItems("setListT1", setListT1, DataSaveControl::ListItems);
+    dataSaveControl->saveListItems("setListT2_png", setListT2_png, DataSaveControl::ListItems);
+    dataSaveControl->saveListItems("setListT2_txt", setListT2_txt, DataSaveControl::ListItems);
+    dataSaveControl->saveListItems("setTabWidget", setTabWidget, DataSaveControl::ListItems);
+    dataSaveControl->saveListItems("setGallery", setGallery, DataSaveControl::ListItems);
+//    dataSaveControl->saveListItems("setMusic", setMusic, DataSaveControl::ListItems);
 }
 
 void AllMain::setupStackedWidget()
@@ -227,46 +245,65 @@ void AllMain::volume_Changed(bool toggleVisibility)
 {
     volume_slider = this->findChild<QSlider *>("volumeSlider");
     btn_volume = this->findChild<QPushButton *>("btn_volume");
-    //提前初始化音乐
-//    player = new QMediaPlayer(this);
-    if (toggleVisibility && volume_slider){
-        if(volume_slider->isVisible()){
+
+    if (toggleVisibility && volume_slider) {
+        if (volume_slider->isVisible()) {
             volume_slider->hide();
-        }else{
+        } else {
             volume_slider->show();
         }
     }
 
-    if (volume_slider && btn_volume) {
-        volumeValue = volume_slider->value();
-        if (volumeValue == 0) {
-            newLevel = "mute";
-        } else if (volumeValue > 0 && volumeValue <= 33) {
-            newLevel = "level1";
-        } else if (volumeValue > 33 && volumeValue <= 66) {
-            newLevel = "level2";
-        } else {
-            newLevel = "level3";
-        }
-
-        // 仅当属性发生变化时，才更新属性和重新应用样式
-        if (btn_volume->property("volumeLevel") != newLevel) {
-            btn_volume->setProperty("volumeLevel", newLevel);
-
-            // 重新应用样式表
-            btn_volume->style()->unpolish(btn_volume);
-            btn_volume->style()->polish(btn_volume);
-        }
-
-        if (player) {
-            player->setVolume(volumeValue); // 设置 QMediaPlayer 的音量
-        }
-
-        // 强制重绘按钮
-        btn_volume->update();
-        btn_volume->repaint();
+    // 在这种情况下，我们使用滑块的值来更新音量
+    if (volume_slider) {
+        int volumeValue = volume_slider->value();
+        updateVolumeUI(volumeValue);
     }
 }
+
+void AllMain::volume_Changed(int volumeValue)
+{
+    // 更新UI（按钮图标和音量滑块）
+    updateVolumeUI(volumeValue);
+
+    // 同步播放器音量
+    if (player) {
+        player->setVolume(volumeValue);
+    }
+}
+
+// 更新UI的通用方法
+void AllMain::updateVolumeUI(int volumeValue)
+{
+    if (!volume_slider || !btn_volume) return;
+
+    // 更新音量滑块
+    volume_slider->setValue(volumeValue);
+
+    // 确定音量图标
+    QString newLevel;
+    if (volumeValue == 0) {
+        newLevel = "mute";
+    } else if (volumeValue > 0 && volumeValue <= 33) {
+        newLevel = "level1";
+    } else if (volumeValue > 33 && volumeValue <= 66) {
+        newLevel = "level2";
+    } else {
+        newLevel = "level3";
+    }
+
+    // 更新按钮图标
+    if (btn_volume->property("volumeLevel") != newLevel) {
+        btn_volume->setProperty("volumeLevel", newLevel);
+        btn_volume->style()->unpolish(btn_volume);
+        btn_volume->style()->polish(btn_volume);
+    }
+
+    // 强制重绘按钮
+    btn_volume->update();
+    btn_volume->repaint();
+}
+
 
 void AllMain::searchData()
 {
@@ -315,7 +352,7 @@ void AllMain::setListT1()
     ui->listT1->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->listT1->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    QStringList items = dataSaveControl.loadListItems("setListT1", DataSaveControl::ListItems);
+    QStringList items = dataSaveControl->loadListItems("setListT1", DataSaveControl::ListItems);
     for (int i = 0; i < items.size(); ++i) {
         QListWidgetItem *item = new QListWidgetItem(ui->listT1);
         item->setText(items[i]);
@@ -326,8 +363,8 @@ void AllMain::setListT2()
 {
     ui->listT2->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->listT2->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    QStringList items_png = dataSaveControl.loadListItems("setListT2_png", DataSaveControl::ListItems);
-    QStringList items_txt = dataSaveControl.loadListItems("setListT2_txt", DataSaveControl::ListItems);
+    QStringList items_png = dataSaveControl->loadListItems("setListT2_png", DataSaveControl::ListItems);
+    QStringList items_txt = dataSaveControl->loadListItems("setListT2_txt", DataSaveControl::ListItems);
     // 确保两个列表长度相同，以便正确地将图标和文本对应
     int itemCount = qMin(items_png.size(), items_txt.size());
     for (int i = 0; i < itemCount; ++i) {
@@ -350,7 +387,7 @@ void AllMain::setListT3()
 
 void AllMain::setTabWidget()
 {
-    QStringList items = dataSaveControl.loadListItems("setTabWidget", DataSaveControl::ListItems);
+    QStringList items = dataSaveControl->loadListItems("setTabWidget", DataSaveControl::ListItems);
     for (int i = 0; i < items.size(); ++i) {
         ui->tabWidget->setTabText(i,items[i]);
     }
@@ -367,7 +404,7 @@ void AllMain::setGallery()
     //初始话数据
     gallerPrivate = new GalleryPrivate();
 
-    QStringList items_Gallery = dataSaveControl.loadListItems("setGallery", DataSaveControl::ListItems);
+    QStringList items_Gallery = dataSaveControl->loadListItems("setGallery", DataSaveControl::ListItems);
     QList<GalleryItem * > items;
     for(int i = 0; i < items_Gallery.size(); ++i)
     {
@@ -952,7 +989,16 @@ void AllMain::setMusicLeft()
 
 void AllMain::setMusicList()
 {
-    QStringList musicList = dataSaveControl.loadListItems("setMusic", DataSaveControl::ListItems);
+//    QStringList musicList = dataSaveControl.loadListItems("setMusic", DataSaveControl::ListItems);
+
+    QString directoryPath = "./music";
+//    QStringList filters; // 如果不需要过滤器，可留空
+////    filters << "*.mp3" /*<< "*.txt"*/; // 你可以根据需要添加过滤条件
+//    filters << "*.mp3";
+
+    QStringList filters = QStringList() << "*.mp3" ;
+
+    QStringList musicList = dataSaveControl->scanFilesInDirectory(directoryPath, filters);
 
     connect(player, &QMediaPlayer::positionChanged, [=](qint64 duration){
         if (ui->horsliderMusic->isSliderDown())
@@ -984,7 +1030,13 @@ void AllMain::setMusicList()
     for(int i = 0; i < musicList.size(); ++i){
 //        playlist->addMedia(QUrl::fromLocalFile("./music/"+musicList[i])); //Add files
 //        player->setMedia(QUrl::fromLocalFile(QFileInfo(QString("./music/"+musicList[i])).absoluteFilePath()));
-          loadMusic(player, playlist, "./music/" + musicList[i]);
+//          loadMusic(player, playlist, "./music/" + musicList[i]);
+//        QMediaContent media(QUrl::fromLocalFile("/path/to/your/song.mp3"));
+//        player->setMedia(media);
+
+        player->setMedia(QMediaContent(QUrl::fromLocalFile(QFileInfo("./music/"+musicList[i]).absoluteFilePath())));
+
+
     }
 
     playlist->setCurrentIndex(0);
@@ -1096,6 +1148,15 @@ bool AllMain::eventFilter(QObject *watched, QEvent *event)
             return false;
         }
 
+    }
+    else if (watched == ui->volumeSlider) {
+        if (event->type() == QEvent::Leave) {
+            // 当鼠标离开滑块时启动定时器
+            hideSliderTimer->start();
+        } else if (event->type() == QEvent::Enter) {
+            // 当鼠标再次进入滑块区域时，停止定时器
+            hideSliderTimer->stop();
+        }
     }
 
     return QWidget::eventFilter(watched,event);
@@ -1218,9 +1279,14 @@ void AllMain::on_pushButton_message_clicked()
 
 void AllMain::horsliderMusic_changed(int value)
 {
-        player->blockSignals(true);
+//        player->blockSignals(true);
+//        player->setPosition(value);
+//        player->blockSignals(false);
+
+    // 在快进或快退时，延迟执行位置设置
+    QTimer::singleShot(50, [this, value]() {
         player->setPosition(value);
-        player->blockSignals(false);
+    });
 }
 
 void AllMain::btnPlayPause(bool checked)
@@ -1234,3 +1300,5 @@ void AllMain::btnPlayPause(bool checked)
         player->pause();
     }
 }
+
+

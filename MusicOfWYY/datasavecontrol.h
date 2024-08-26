@@ -4,6 +4,8 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#include <QDir>
+#include <QFileInfoList>
 
 class DataSaveControl {
 public:
@@ -16,6 +18,7 @@ public:
 
     void saveListItems(const QString &groupName, const QStringList &items, FileType fileType);
     QStringList loadListItems(const QString &groupName, FileType fileType);
+    QStringList scanFilesInDirectory(const QString &directoryPath, const QStringList &filters = QStringList());
 
 private:
     QString getFileName(FileType fileType) const;

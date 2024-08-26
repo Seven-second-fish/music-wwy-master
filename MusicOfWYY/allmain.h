@@ -31,11 +31,12 @@ void on_pushButton_message_clicked();
 #include "messageform.h"
 #include <QDebug>
 #include "datasavecontrol.h"
-#include "volumecontrol.h"
+#include "volumemonitor.h"
 #include <QTimer>
 #include <QSlider>
 #include <customslider.h>
 #include <QFileInfo>
+#include <volumemonitor.h>
 namespace Ui {
 class AllMain;
 }
@@ -46,8 +47,7 @@ class AllMain : public QMainWindow
 
 public:
     explicit AllMain(QWidget *parent = nullptr);
-    void initializeConnections(); //Initialize the connection
-    void Initializefunction();  //Initialization function
+    void init();
     //Invocation based on system judgment
     void loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QString& filePath);
     ~AllMain();
@@ -122,6 +122,8 @@ private slots:
     void btnPlayPause(bool checked);
 
     void volume_Changed(bool toggleVisibility);  // change the volume
+    void volume_Changed(int volumeValue);
+    void updateVolumeUI(int volumeValue);
 
     void audio_changed();     //change the audio
 
@@ -157,7 +159,7 @@ private:
     QString  durationTime;//总长度
     QString  positionTime;//当前播放到位置
 
-    DataSaveControl dataSaveControl; //数据保存ini
+    DataSaveControl *dataSaveControl; //数据保存ini
 
     //goToPreviousStep
     QStackedWidget *stackedWidget;
@@ -168,12 +170,15 @@ private:
     void setupStackedWidget();    //updateSource
 
     //for volume
-    VolumeControl *volumeControl;
     QSlider *volume_slider;
     QPushButton *btn_volume;
 //    int hideSliderTimerId;  //timerEvent
     int volumeValue;
     QString newLevel;
+    VolumeMonitor *monitor;
+    QTimer *hideSliderTimer;
+
+    bool isSystemVolumeChange = false; // 定义一个标志位，用于区分信号来源
 
 };
 
