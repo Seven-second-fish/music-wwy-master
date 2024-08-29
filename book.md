@@ -119,5 +119,9 @@ QT5教程 完整版
 
     `greaterThan**(**QT_MAJOR_VERSION, 4**)**: QT += widgets`
 
-22. 
+22. QKeySequence
+
+    使用了`setShortcut()`函数，用于说明这个`QAction`的快捷键
+
+23. 
 
