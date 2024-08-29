@@ -39,15 +39,12 @@ QStringList DataSaveControl::scanFilesInDirectory(const QString &directoryPath, 
     QDir dir(directoryPath);
     QStringList fileList;
 
-    // 如果提供了过滤器，则应用过滤器
     if (!filters.isEmpty()) {
         dir.setNameFilters(filters);
     }
 
-    // 获取目录中的所有文件（包括符合过滤条件的文件）
     QFileInfoList files = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
-    // 将文件名或文件路径添加到 QStringList 中
     for (const QFileInfo &fileInfo : files) {
         fileList << fileInfo.fileName(); // 仅文件名
         // fileList << fileInfo.absoluteFilePath(); // 完整路径（如果需要）

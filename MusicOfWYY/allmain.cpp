@@ -67,8 +67,10 @@ void AllMain::init()
     playlist = new QMediaPlaylist(this);
     playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
     player->setPlaylist(playlist);
-    connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
-
+//    connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
+    connect(ui->btnPlayPause, &QPushButton::toggled, [this](bool checked){
+        checked?player->play():player->pause();
+    });
     //调整状态，滑动时屏蔽player的信号发出，松开时解锁
     connect(ui->horsliderMusic, &QSlider::sliderPressed, [this]() {
         player->blockSignals(true);
@@ -79,6 +81,8 @@ void AllMain::init()
     });
     //初始化音乐
     setMusicList();
+
+
 
     //for voice
     volume_slider = this->findChild<QSlider *>("volumeSlider");
@@ -110,13 +114,13 @@ void AllMain::init()
     });
 
     //启用监控系统音量,似乎不生效
-    monitor = new VolumeMonitor(this);
-    monitor->startMonitoring();
-    connect(monitor, &VolumeMonitor::systemVolumeChanged, [this](int newVolume) {
-        isSystemVolumeChange = true;
-        volume_Changed(newVolume);
-        isSystemVolumeChange = false;
-    });
+//    monitor = new VolumeMonitor(this);
+//    monitor->startMonitoring();
+//    connect(monitor, &VolumeMonitor::systemVolumeChanged, [this](int newVolume) {
+//        isSystemVolumeChange = true;
+//        volume_Changed(newVolume);
+//        isSystemVolumeChange = false;
+//    });
 
     //for audio
 
