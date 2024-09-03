@@ -4,6 +4,8 @@ QT5教程 完整版
 
 +[QT学习之路]https://www.devbean.net/2012/08/qt-study-road-2-catelog/
 
++[QT入门]https://subingwen.cn/qt/qt-primer/
+
 进度：60  页
 
 整理：
@@ -123,5 +125,60 @@ QT5教程 完整版
 
     使用了`setShortcut()`函数，用于说明这个`QAction`的快捷键
 
-23. 
+23. triggered
+
+24. res.qrc，使用方式
+
+    ```c
+    //添加语言区分
+    //如果本机的本地化信息是fr的话(QLocale::system().name()返回fr_FR()),则使用:/images/fr/doc-open这个图片
+    <RCC>
+        <qresource prefix="/images">
+            <file alias="doc-open">document-open.png</file>
+        </qresource>
+        <qresource prefix="/images/fr" lang="fr">
+            <file alias="doc-open">document-open-fr.png</file>
+        </qresource>
+    </RCC>
+    ```
+
+25. QWidget->QHBosLayout->小组件
+
+26. 事件过滤器：(包括事件处理，一知半解需要后续学习)
+
+    ```c
+    //eventFilter()创建了不让textEdit组件处理键盘按下的事件
+    //安装过滤器需要调用installEventFilter()函数
+    MainWindow::MainWindow()
+     {
+         textEdit = new QTextEdit;
+         setCentralWidget(textEdit);
+         textEdit->installEventFilter(this);
+     }
+     bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+     {
+         if (obj == textEdit) {
+             if (event->type() == QEvent::KeyPress) {
+                 QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+                 qDebug() << "Ate key press" << keyEvent->key();
+                 return true;
+             } else {
+                 return false;
+             }
+         } else {
+             // pass the event on to the parent class
+             return QMainWindow::eventFilter(obj, event);
+         }
+     }
+    ```
+
+27. 由上延伸：事件处理器常用函数
+
+    Event Classes
+
+    https://subingwen.cn/qt/event_handler/
+
+28. 交叉编译(makefile，mingw64，后续深入学习)
+
+29. Qt 绘制系统：QPainter
 
