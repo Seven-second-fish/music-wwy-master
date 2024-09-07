@@ -52,7 +52,7 @@ SOURCES += \
         searchitem.cpp \
         datasavecontrol.cpp \
         historymanager.cpp \
-        volumemonitor.cpp
+#        volumemonitor.cpp
 
 HEADERS += \
         allmain.h \
@@ -77,7 +77,7 @@ HEADERS += \
         searchitem.h \
         datasavecontrol.h \
         historymanager.h \
-        volumemonitor.h
+#        volumemonitor.h
 
 FORMS += \
         allmain.ui \

@@ -52,7 +52,7 @@ AllMain::~AllMain()
 {
     delete ui;
 //    delete historyManager;
-    monitor->stopMonitoring();
+//    monitor->stopMonitoring();
 }
 
 void AllMain::init()
