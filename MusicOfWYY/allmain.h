@@ -9,6 +9,7 @@ void on_pushButton_message_clicked();
 #include <QButtonGroup>
 #include <QStackedLayout>
 #include <QMediaPlayer>
+#include <QMediaMetaData>
 #include <QMediaPlaylist>
 #include <QPushButton>
 //#include <QFile>
@@ -41,15 +42,30 @@ namespace Ui {
 class AllMain;
 }
 
+typedef struct music_info_st
+{
+    QString mic_name;           //曲名
+    QString mic_songer;         //歌手
+//    QString mic_time;           //时长
+//    QString mic_album;          //专辑
+//    QString mic_path;           //mp3所在路径
+//    QString pic_flag="0";       //是否有图片
+//    QString pic_path;           //歌曲图片
+//    QString pic_type;           //图片类型 jpg,png
+//    QString showlist;           //列表显示
+}MUSIC_info;
+
+//Q_DECLARE_METATYPE(MUSIC_info);
+
 class AllMain : public QMainWindow
 {
     Q_OBJECT
 
 public:
     explicit AllMain(QWidget *parent = nullptr);
-    void init();
+    void initMusic();
     //Invocation based on system judgment
-    void loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QString& filePath);
+    void loadMusic();
     ~AllMain();
     void searchData();
     void setListT1();  //设置推荐列表
@@ -79,14 +95,15 @@ public:
     void setLanguageChose(int id);
     void changeChose(); //变化对应界面
 
-    /*左下角模块*/
-    void setMusicLeft(); //加载左下角模块
+    void setMusicLeft();
 
-    /*初始话音乐*/
-    void setMusicList(); //初始化音乐
+    void setHorsliderMusic(MUSIC_info &musicInfo);
 
     // 替换 QSlider 为 CustomSlider
     void replaceSlider();
+
+    void getMusicInfo();
+    void musicInfo_judge_sys(const QString& filePath);
 protected:
     //绘制背景函数
     void paintEvent(QPaintEvent* event);
@@ -102,6 +119,7 @@ protected:
     void timerEvent(QTimerEvent *event);
 signals:
     void btnClickedSig();
+    void musicInfoReady(const MUSIC_info &info);
 
 private slots:
     void on_pushButton_close_clicked();

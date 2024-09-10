@@ -14,7 +14,7 @@ AllMain::AllMain(QWidget *parent) :
 
 //    replaceSlider();
 
-    init();
+    initMusic();
 
     //updateSource
 //    setupStackedWidget();
@@ -43,8 +43,6 @@ AllMain::AllMain(QWidget *parent) :
     setAddWidget();
     setNewMusicButton();
     setNewMusicChooseButton();
-    /*左下角模块*/
-    setMusicLeft();
 
 }
 
@@ -55,14 +53,16 @@ AllMain::~AllMain()
 //    monitor->stopMonitoring();
 }
 
-void AllMain::init()
+void AllMain::initMusic()
 {
     connect(ui->pushButton_min, &QPushButton::clicked, this, &AllMain::btn_bkg_min);
     connect(ui->pushButton_max, &QPushButton::clicked, this, &AllMain::btn_bkg_max);
     connect(ui->pushButton_title_left, &QPushButton::clicked, this, &AllMain::goToPreviousPage);
     connect(ui->pushButton_title_right, &QPushButton::clicked, this, &AllMain::goToNextPage);
 
-    //for music
+    //FOR MUSIC
+    MUSIC_info musicInfo;
+
     player = new QMediaPlayer(this);
     playlist = new QMediaPlaylist(this);
     playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
@@ -79,12 +79,11 @@ void AllMain::init()
         player->blockSignals(false);
         horsliderMusic_changed(ui->horsliderMusic->value());
     });
-    //初始化音乐
-    setMusicList();
+    getMusicInfo();
+//    setMusicLeft();
+    setHorsliderMusic(musicInfo);
 
-
-
-    //for voice
+    //FOR VOICE
     volume_slider = this->findChild<QSlider *>("volumeSlider");
     btn_volume = this->findChild<QPushButton *>("btn_volume");
     if (volume_slider) {
@@ -122,7 +121,7 @@ void AllMain::init()
 //        isSystemVolumeChange = false;
 //    });
 
-    //for audio
+    //FOR AUDIO
 
 }
 
@@ -982,28 +981,8 @@ void AllMain::changeChose()
     }
 }
 
-void AllMain::setMusicLeft()
+void AllMain::setHorsliderMusic(MUSIC_info &musicInfo)
 {
-    MusicForm *musicForm = new MusicForm();
-    musicForm->setMusicName("能解答一切的答案");
-    musicForm->setMusicAuthor("周深");
-    musicForm->setMusicPicture("./images/Messageform/pic.png");
-    ui->verticalLayout->addWidget(musicForm);
-}
-
-void AllMain::setMusicList()
-{
-//    QStringList musicList = dataSaveControl.loadListItems("setMusic", DataSaveControl::ListItems);
-
-    QString directoryPath = "./music";
-//    QStringList filters; // 如果不需要过滤器，可留空
-////    filters << "*.mp3" /*<< "*.txt"*/; // 你可以根据需要添加过滤条件
-//    filters << "*.mp3";
-
-    QStringList filters = QStringList() << "*.mp3" ;
-
-    QStringList musicList = dataSaveControl->scanFilesInDirectory(directoryPath, filters);
-
     connect(player, &QMediaPlayer::positionChanged, [=](qint64 duration){
         if (ui->horsliderMusic->isSliderDown())
         {
@@ -1028,26 +1007,82 @@ void AllMain::setMusicList()
         secs = secs % 60; //剩余秒
         durationTime = QString::asprintf("%02d:%02d", min, secs);
         ui->label_time_long->setText(durationTime);
+//        qDebug()<<"durationTime="<<durationTime;
+//        musicInfo.mic_time = durationTime;
     });
-
-    //加载音乐
-    for(int i = 0; i < musicList.size(); ++i){
-//        playlist->addMedia(QUrl::fromLocalFile("./music/"+musicList[i])); //Add files
-//        player->setMedia(QUrl::fromLocalFile(QFileInfo(QString("./music/"+musicList[i])).absoluteFilePath()));
-//          loadMusic(player, playlist, "./music/" + musicList[i]);
-//        QMediaContent media(QUrl::fromLocalFile("/path/to/your/song.mp3"));
-//        player->setMedia(media);
-
-        player->setMedia(QMediaContent(QUrl::fromLocalFile(QFileInfo("./music/"+musicList[i]).absoluteFilePath())));
-
-
-    }
 
     playlist->setCurrentIndex(0);
 }
 
+void AllMain::getMusicInfo() {
+    MUSIC_info musicInfo;
+    // 加载音乐文件
+    loadMusic();
+    MusicForm *musicForm = new MusicForm();
+    qDebug()<<"mic_songer = "<<musicInfo.mic_songer;
+
+    // 先断开之前的信号连接，防止重复连接
+    QObject::disconnect(player, &QMediaPlayer::mediaStatusChanged, nullptr, nullptr);
+
+    // 当音乐文件准备好时，获取元数据
+    connect(player, &QMediaPlayer::mediaStatusChanged, [=,&musicInfo](QMediaPlayer::MediaStatus status) {
+        // 检查元数据是否可用
+        if (player->isMetaDataAvailable()) {
+            // 获取曲名
+            QVariant titleMetaData = player->metaData(QMediaMetaData::Title);
+            musicInfo.mic_name = titleMetaData.isValid() && !titleMetaData.toString().isEmpty()
+                ? titleMetaData.toString()
+                : "未知歌曲";
+
+            // 获取歌手
+            QVariant artistMetaData = player->metaData(QMediaMetaData::ContributingArtist);
+            musicInfo.mic_songer = artistMetaData.isValid() && !artistMetaData.toString().isEmpty()
+                ? artistMetaData.toString()
+                : "未知歌手";
+            qDebug()<<"mic_songer = "<<musicInfo.mic_songer;
+
+            // 获取封面图片
+//            QImage coverArt = player->metaData(QMediaMetaData::CoverArtImage).value<QImage>();
+//            if (!coverArt.isNull()) {
+//                musicInfo.pic_flag = "1";  // 标记有图片
+//                QString coverFileName = musicInfo.mic_name + "_cover.jpg";
+//                coverArt.save(coverFileName);  // 保存图片到文件
+//                musicInfo.pic_path = coverFileName;
+//                musicInfo.pic_type = "jpg";  // 假设为 jpg 格式
+//            } else {
+//                musicInfo.pic_flag = "0";  // 没有图片
+//            }
+//            qDebug()<<"musicInfo.pic_flag ="<<musicInfo.pic_flag;
+        } else {
+            qDebug() << "元数据不可用";
+        }
+    });
+
+    musicForm->setMusicPicture("./images/Messageform/pic.png");
+    musicForm->setMusicName(musicInfo.mic_name);
+    musicForm->setMusicAuthor(musicInfo.mic_songer);
+}
+
 //Invocation based on system judgment
-void AllMain::loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QString& filePath) {
+void AllMain::loadMusic() {
+
+    QString directoryPath = "./music";
+//    filters << "*.mp3" /*<< "*.txt"*/; // 你可以根据需要添加过滤条件
+
+    QStringList filters = QStringList() << "*.mp3" ;
+
+    //musicList can be used to other
+    QStringList musicList = dataSaveControl->scanFilesInDirectory(directoryPath, filters);
+
+    //加载音乐
+    for(QString value : musicList)
+    {
+        musicInfo_judge_sys("./music/"+value);
+    }
+}
+
+void AllMain::musicInfo_judge_sys(const QString& filePath)
+{
 #ifdef Q_OS_WIN
     playlist->addMedia(QUrl::fromLocalFile(filePath));
 #elif defined(Q_OS_LINUX)
@@ -1057,6 +1092,17 @@ void AllMain::loadMusic(QMediaPlayer* player, QMediaPlaylist* playlist, const QS
 #endif
 }
 
+void AllMain::setMusicLeft()
+{
+    MusicForm *musicForm = new MusicForm();
+    musicForm->setMusicName("能解答一切的答案");
+    musicForm->setMusicAuthor("周深");
+    musicForm->setMusicPicture("./images/Messageform/pic.png");
+//    musicForm->setMusicName(musicInfo.mic_name);
+//    musicForm->setMusicAuthor(musicInfo.mic_songer);
+
+    ui->verticalLayout->addWidget(musicForm);
+}
 
 void AllMain::paintEvent(QPaintEvent *event)
 {
