@@ -14,12 +14,19 @@ class MusicForm : public QWidget
 public:
     explicit MusicForm(QWidget *parent = nullptr);
     ~MusicForm();
-    void setMusicName(QString musicName);
+    void setMusicName(const QString& musicName);
     void setMusicAuthor(QString musicAuther);
     void setMusicPicture(QString url);
 
 private:
     Ui::MusicForm *ui;
+
+    QTimer* scrollTimer = nullptr;
+    QString originalText;  // 原始文本
+    int offset = 0;        // 偏移量，用于控制滚动位置
+    int ScrollTextWidth = 7;
+private slots:
+    void updateScrollingText();  // 更新滚动文本
 };
 
 #endif // MUSICFORM_H
