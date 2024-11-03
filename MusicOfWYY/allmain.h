@@ -42,17 +42,14 @@ namespace Ui {
 class AllMain;
 }
 
-typedef struct music_info_st
-{
-    QString mic_name;           //曲名
-    QString mic_songer;         //歌手
-//    QString mic_time;           //时长
-//    QString mic_album;          //专辑
-//    QString mic_path;           //mp3所在路径
-//    QString pic_flag="0";       //是否有图片
-//    QString pic_path;           //歌曲图片
-//    QString pic_type;           //图片类型 jpg,png
-//    QString showlist;           //列表显示
+typedef struct MUSIC_info {
+    int musicId;
+    QString title;
+    QString artist;
+    QString album;
+    QString filePath;
+    qint64 duration; // 持续时间（以毫秒为单位）
+    QList<MUSIC_info> musicList;
 }MUSIC_info;
 
 //Q_DECLARE_METATYPE(MUSIC_info);
@@ -95,15 +92,18 @@ public:
     void setLanguageChose(int id);
     void changeChose(); //变化对应界面
 
-    void setMusicLeft();
+    void setMusicLeft(QMediaPlayer *player,const QList<MUSIC_info> musicInfo);
 
-    void setHorsliderMusic(MUSIC_info &musicInfo);
+    void setHorsliderMusic(QMediaPlayer *player,const QList<MUSIC_info> musicInfo);
 
     // 替换 QSlider 为 CustomSlider
     void replaceSlider();
 
-    void getMusicInfo();
     void musicInfo_judge_sys(const QString& filePath);
+    QList<MUSIC_info> getMusicInfoFromFolder(const QString &folderPath);
+//    void getMusicInfoFromFolder(const QString &folderPath);
+
+    void playMusicById(int musicId, const QList<MUSIC_info>& musicInfoList);
 protected:
     //绘制背景函数
     void paintEvent(QPaintEvent* event);
@@ -155,6 +155,7 @@ private:
     PictureWidget * pictureWidget;    //图片墙
     GalleryPrivate * gallerPrivate;  //专属定制中的画廊
     QButtonGroup * pButtonMus; //音乐组的
+
     /*歌手模块*/
     QButtonGroup * pButtonLaug; //语言
     QButtonGroup * pButtonClass; //歌手分类
@@ -171,11 +172,13 @@ private:
     MessageForm * pMessageForm = nullptr;
 
     //播放音乐部分
-    QMediaPlayer    *player;//播放器
+    MusicForm *musicForm; //SONG
+    QMediaPlayer *myplayer;//播放器
     QMediaPlaylist  *playlist;//播放列表
 
     QString  durationTime;//总长度
     QString  positionTime;//当前播放到位置
+    QList<MUSIC_info> musicInfo;
 
     DataSaveControl *dataSaveControl; //数据保存ini
 

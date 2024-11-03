@@ -6,7 +6,7 @@
 AllMain::AllMain(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::AllMain),
-    player(nullptr)
+    myplayer(nullptr)
 {
     ui->setupUi(this);
 
@@ -61,27 +61,27 @@ void AllMain::initMusic()
     connect(ui->pushButton_title_right, &QPushButton::clicked, this, &AllMain::goToNextPage);
 
     //FOR MUSIC
-    MUSIC_info musicInfo;
-
-    player = new QMediaPlayer(this);
+    myplayer = new QMediaPlayer(this);
     playlist = new QMediaPlaylist(this);
     playlist->setPlaybackMode(QMediaPlaylist::Loop); //循环模式
-    player->setPlaylist(playlist);
-//    connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
-    connect(ui->btnPlayPause, &QPushButton::toggled, [this](bool checked){
-        checked?player->play():player->pause();
-    });
+    myplayer->setPlaylist(playlist);
+    connect(ui->btnPlayPause, &QPushButton::toggled, this, &AllMain::btnPlayPause);
+//    connect(ui->btnPlayPause, &QPushButton::toggled, [this](bool checked){
+//        checked?myplayer->play():myplayer->pause();
+//    });
     //调整状态，滑动时屏蔽player的信号发出，松开时解锁
     connect(ui->horsliderMusic, &QSlider::sliderPressed, [this]() {
-        player->blockSignals(true);
+        myplayer->blockSignals(true);
     });
     connect(ui->horsliderMusic, &QSlider::sliderReleased, [this]() {
-        player->blockSignals(false);
+        myplayer->blockSignals(false);
         horsliderMusic_changed(ui->horsliderMusic->value());
     });
-    getMusicInfo();
-//    setMusicLeft();
-    setHorsliderMusic(musicInfo);
+
+    loadMusic();
+
+    setMusicLeft(myplayer,musicInfo);
+    setHorsliderMusic(myplayer,musicInfo);
 
     //FOR VOICE
     volume_slider = this->findChild<QSlider *>("volumeSlider");
@@ -270,8 +270,8 @@ void AllMain::volume_Changed(int volumeValue)
     updateVolumeUI(volumeValue);
 
     // 同步播放器音量
-    if (player) {
-        player->setVolume(volumeValue);
+    if (myplayer) {
+        myplayer->setVolume(volumeValue);
     }
 }
 
@@ -981,7 +981,52 @@ void AllMain::changeChose()
     }
 }
 
-void AllMain::setHorsliderMusic(MUSIC_info &musicInfo)
+//Invocation based on system judgment
+void AllMain::loadMusic() {
+    qDebug() << "loadMusic";
+
+    QString folderPath = "./music";
+    musicInfo = getMusicInfoFromFolder(folderPath);
+
+    // 遍历获取的音乐信息列表，并将每首歌曲的路径添加到播放列表
+    for (const MUSIC_info &musicInfo : musicInfo) {
+        musicInfo_judge_sys(musicInfo.filePath);
+    }
+
+//    // 播放第一首歌
+//    if (!musicInfo.isEmpty()) {
+//        MUSIC_info firstSong = musicInfo.first();
+//        playMusicById(firstSong.musicId, musicInfo);
+//    }
+}
+
+void AllMain::playMusicById(int musicId, const QList<MUSIC_info>& musicInfoList) {
+    for (const MUSIC_info& musicInfo : musicInfoList) {
+        if (musicInfo.musicId == musicId) {
+            qDebug() << "Playing song with ID:" << musicId << ", Title:" << musicInfo.title;
+            myplayer->setMedia(QUrl::fromLocalFile(musicInfo.filePath));
+//            myplayer->play();
+            break;
+        }
+    }
+}
+
+void AllMain::setMusicLeft(QMediaPlayer *player,const QList<MUSIC_info> musicInfo)
+{
+    musicForm = new MusicForm();
+//    musicForm->setMusicName("能解答一切的答案");
+//    musicForm->setMusicAuthor("周深");
+
+    const MUSIC_info &firstMusic = musicInfo.first();
+
+    musicForm->setMusicPicture("./images/Messageform/pic.png");
+    musicForm->setMusicName(firstMusic.title);
+    musicForm->setMusicAuthor(firstMusic.artist);
+
+    ui->verticalLayout->addWidget(musicForm);
+}
+
+void AllMain::setHorsliderMusic(QMediaPlayer *player,const QList<MUSIC_info> musicInfo)
 {
     connect(player, &QMediaPlayer::positionChanged, [=](qint64 duration){
         if (ui->horsliderMusic->isSliderDown())
@@ -1014,95 +1059,65 @@ void AllMain::setHorsliderMusic(MUSIC_info &musicInfo)
     playlist->setCurrentIndex(0);
 }
 
-void AllMain::getMusicInfo() {
-    MUSIC_info musicInfo;
-    // 加载音乐文件
-    loadMusic();
-    MusicForm *musicForm = new MusicForm();
-    qDebug()<<"mic_songer = "<<musicInfo.mic_songer;
 
-    // 先断开之前的信号连接，防止重复连接
-    QObject::disconnect(player, &QMediaPlayer::mediaStatusChanged, nullptr, nullptr);
+// 函数：读取文件夹中所有歌曲文件的信息
+QList<MUSIC_info> AllMain::getMusicInfoFromFolder(const QString &folderPath) {
+    QList<MUSIC_info> musicInfoList; // 用于保存所有歌曲信息的列表
+    QDir dir(folderPath); // 打开文件夹
 
-    // 当音乐文件准备好时，获取元数据
-    connect(player, &QMediaPlayer::mediaStatusChanged, [=,&musicInfo](QMediaPlayer::MediaStatus status) {
-        // 检查元数据是否可用
-        if (player->isMetaDataAvailable()) {
-            // 获取曲名
-            QVariant titleMetaData = player->metaData(QMediaMetaData::Title);
-            musicInfo.mic_name = titleMetaData.isValid() && !titleMetaData.toString().isEmpty()
-                ? titleMetaData.toString()
-                : "未知歌曲";
+    // 仅筛选常见的音频文件类型
+    QStringList nameFilters;
+    nameFilters << "*.mp3" << "*.wav" << "*.flac";
 
-            // 获取歌手
-            QVariant artistMetaData = player->metaData(QMediaMetaData::ContributingArtist);
-            musicInfo.mic_songer = artistMetaData.isValid() && !artistMetaData.toString().isEmpty()
-                ? artistMetaData.toString()
-                : "未知歌手";
-            qDebug()<<"mic_songer = "<<musicInfo.mic_songer;
+    // 获取文件夹中的所有歌曲文件
+    QFileInfoList fileList = dir.entryInfoList(nameFilters, QDir::Files);
 
-            // 获取封面图片
-//            QImage coverArt = player->metaData(QMediaMetaData::CoverArtImage).value<QImage>();
-//            if (!coverArt.isNull()) {
-//                musicInfo.pic_flag = "1";  // 标记有图片
-//                QString coverFileName = musicInfo.mic_name + "_cover.jpg";
-//                coverArt.save(coverFileName);  // 保存图片到文件
-//                musicInfo.pic_path = coverFileName;
-//                musicInfo.pic_type = "jpg";  // 假设为 jpg 格式
-//            } else {
-//                musicInfo.pic_flag = "0";  // 没有图片
-//            }
-//            qDebug()<<"musicInfo.pic_flag ="<<musicInfo.pic_flag;
-        } else {
-            qDebug() << "元数据不可用";
-        }
-    });
+    for (const QFileInfo &fileInfo : fileList) {
+        QMediaPlayer *tempPlayer = new QMediaPlayer; // 创建新的播放器实例
+        MUSIC_info musicInfo;
+        musicInfo.filePath = fileInfo.absoluteFilePath();
 
-    musicForm->setMusicPicture("./images/Messageform/pic.png");
-    musicForm->setMusicName(musicInfo.mic_name);
-    musicForm->setMusicAuthor(musicInfo.mic_songer);
-}
+        tempPlayer->setMedia(QUrl::fromLocalFile(musicInfo.filePath));
 
-//Invocation based on system judgment
-void AllMain::loadMusic() {
+        // 等待元数据加载完成
+        QEventLoop loop;
+        connect(tempPlayer, &QMediaPlayer::mediaStatusChanged, [tempPlayer, &musicInfo, &musicInfoList, &loop](QMediaPlayer::MediaStatus status) {
+            if (status == QMediaPlayer::LoadedMedia) {
+                // 获取歌曲的标题、艺术家、专辑和持续时间
+                musicInfo.title = tempPlayer->metaData(QMediaMetaData::Title).toString();
+                musicInfo.artist = tempPlayer->metaData(QMediaMetaData::ContributingArtist).toString();
+                musicInfo.album = tempPlayer->metaData(QMediaMetaData::AlbumTitle).toString();
+                musicInfo.duration = tempPlayer->duration();
 
-    QString directoryPath = "./music";
-//    filters << "*.mp3" /*<< "*.txt"*/; // 你可以根据需要添加过滤条件
+                musicInfoList.append(musicInfo); // 将当前歌曲信息添加到列表中
+                loop.quit(); // 退出等待循环，继续加载下一首歌曲
+            } else if (status == QMediaPlayer::InvalidMedia) {
+                qDebug() << "Failed to load media for file:" << musicInfo.filePath;
+                loop.quit();
+            }
+        });
 
-    QStringList filters = QStringList() << "*.mp3" ;
-
-    //musicList can be used to other
-    QStringList musicList = dataSaveControl->scanFilesInDirectory(directoryPath, filters);
-
-    //加载音乐
-    for(QString value : musicList)
-    {
-        musicInfo_judge_sys("./music/"+value);
+        loop.exec(); // 等待当前文件的元数据加载完成
+        tempPlayer->deleteLater(); // 清理播放器实例
     }
+
+    return musicInfoList; // 返回包含所有歌曲信息的列表
 }
 
-void AllMain::musicInfo_judge_sys(const QString& filePath)
-{
+void AllMain::musicInfo_judge_sys(const QString &filePath) {
+    qDebug()<<"filePath="<<filePath;
 #ifdef Q_OS_WIN
+    qDebug() << "do===========>WIN";
     playlist->addMedia(QUrl::fromLocalFile(filePath));
 #elif defined(Q_OS_LINUX)
-    player->setMedia(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()));
+    qDebug() << "do===========>LINUX";
+//    myplayer->setMedia(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()));
+    playlist->addMedia(QUrl::fromLocalFile(filePath));
 #else
     qDebug() << "Unsupported OS";
 #endif
 }
 
-void AllMain::setMusicLeft()
-{
-    MusicForm *musicForm = new MusicForm();
-    musicForm->setMusicName("能解答一切的答案");
-    musicForm->setMusicAuthor("周深");
-    musicForm->setMusicPicture("./images/Messageform/pic.png");
-//    musicForm->setMusicName(musicInfo.mic_name);
-//    musicForm->setMusicAuthor(musicInfo.mic_songer);
-
-    ui->verticalLayout->addWidget(musicForm);
-}
 
 void AllMain::paintEvent(QPaintEvent *event)
 {
@@ -1111,6 +1126,7 @@ void AllMain::paintEvent(QPaintEvent *event)
     painter_mainback.drawPixmap(0,0,this->width(),this->height(),QPixmap(":/mianwindow/images/mainback.png"));
     ui->pushButton_people->setMask(QRegion(0,0,28,28,QRegion::Ellipse));
 }
+
 
 void AllMain::mousePressEvent(QMouseEvent *event)
 {
@@ -1329,13 +1345,13 @@ void AllMain::on_pushButton_message_clicked()
 
 void AllMain::horsliderMusic_changed(int value)
 {
-//        player->blockSignals(true);
-//        player->setPosition(value);
-//        player->blockSignals(false);
+//        myplayer->blockSignals(true);
+//        myplayer->setPosition(value);
+//        myplayer->blockSignals(false);
 
     // 在快进或快退时，延迟执行位置设置
     QTimer::singleShot(50, [this, value]() {
-        player->setPosition(value);
+        myplayer->setPosition(value);
     });
 }
 
@@ -1343,11 +1359,13 @@ void AllMain::btnPlayPause(bool checked)
 {
     if(checked)
     {
-        player->play();
+        myplayer->play();
+        qDebug()<<"myplayer===========>play";
 //        this->setWindowTitle("能解答一切的答案");
     }
     else {
-        player->pause();
+        myplayer->pause();
+        qDebug()<<"myplayer===========>pause";
     }
 }
 

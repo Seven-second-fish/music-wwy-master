@@ -119,7 +119,7 @@ void PictureWidget::setPictureScreen()
            itemList[i]->setPos(itemList[i]->x(),RAW_VIEW_SIZE.height()/10);
         }
         pointA.append(itemList[i]->pos());  //放入到对应位置
-        qDebug()<< pointA[i].x() << ": " << pointA[i].y();
+//        qDebug()<< pointA[i].x() << ": " << pointA[i].y();
     }
     //放入映射map中
     for(int i =0; i<10; i++)
@@ -129,9 +129,9 @@ void PictureWidget::setPictureScreen()
 
     QMap<int,pictureItem *>::const_iterator it;
 
-    for (it = mapLink.constBegin();it!=mapLink.constEnd();it++) {
-        qDebug()<< it.key()<< ": " << it.value();
-    }
+//    for (it = mapLink.constBegin();it!=mapLink.constEnd();it++) {
+//        qDebug()<< it.key()<< ": " << it.value();
+//    }
 
 }
 
