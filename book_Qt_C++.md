@@ -57,11 +57,29 @@
 
 #### QT知识点：
 
-1. 
+1. QObject定时器：int start_time = this->startTimer(3000);，this->killTimer(start_time);
 
-2. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+2. QTimer定时器：
 
-3. 主函数写法：
+   QTimer *start_timer = new QTimer()，
+
+   每3秒钟调用一次timeroutslot函数：
+
+   connect(start_timer,&QTimer::timeout,this,&MainWindow::timeroutslot);
+
+   start_timer->start(3000)
+
+   start_timer->stop();
+
+   等一秒钟后触发timeroutslot函数：
+
+   QTimer::singleShot(1000,this,SLOT(timeroutslot()))
+
+3. 字符串拼接：ui->label_time->setText(QString("title%1").arg(num++));
+
+4. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+
+5. 主函数写法：
 
    ```c++
    //固定形式
@@ -75,19 +93,19 @@
    }
    ```
 
-4. exec()退出函数
+6. exec()退出函数
 
-5. QMessageBox::warning，QMessageBox::Yes
+7. QMessageBox::warning，QMessageBox::Yes
 
-6. QDialog::Accepted
+8. QDialog::Accepted
 
-7. setEchoMode(QLineEdit::Password)：设置密码框
+9. setEchoMode(QLineEdit::Password)：设置密码框
 
-8. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
+10. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
 
-9. setFocus()：设置光标显示位置
+11. setFocus()：设置光标显示位置
 
-10. 解决内存占用过多的问题：
+12. 解决内存占用过多的问题：
 
    **延迟加载（懒加载）** 
 
