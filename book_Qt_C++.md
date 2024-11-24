@@ -61,25 +61,41 @@
 
 2. QTimer定时器：
 
+   ```c
    QTimer *start_timer = new QTimer()，
-
-   每3秒钟调用一次timeroutslot函数：
-
+   //每3秒钟调用一次timeroutslot函数：
    connect(start_timer,&QTimer::timeout,this,&MainWindow::timeroutslot);
-
    start_timer->start(3000)
-
    start_timer->stop();
-
-   等一秒钟后触发timeroutslot函数：
-
+   //等一秒钟后触发timeroutslot函数：
    QTimer::singleShot(1000,this,SLOT(timeroutslot()))
+   ```
 
 3. 字符串拼接：ui->label_time->setText(QString("title%1").arg(num++));
 
-4. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+4. 文件功能：
 
-5. 主函数写法：
+   ```c++
+   QString filename = QFileDialog::getOpenFileName(this,"choose","path","*.cpp");
+   if(filename.isEmpty())
+   {
+       QMessageBox::waring(this,"警告"，"请选择一个文件")；
+   }else{
+       QFile file(filename);
+       file.open(QIODevice::ReadOnly);
+       QByteArray ba = file.readAll();
+       ui->textEdit->setText(QString(ba));
+       file.close();
+   }
+   ```
+
+5. 1
+
+6. 
+
+7. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+
+8. 主函数写法：
 
    ```c++
    //固定形式
@@ -93,19 +109,19 @@
    }
    ```
 
-6. exec()退出函数
+9. exec()退出函数
 
-7. QMessageBox::warning，QMessageBox::Yes
+10. QMessageBox::warning，QMessageBox::Yes
 
-8. QDialog::Accepted
+11. QDialog::Accepted
 
-9. setEchoMode(QLineEdit::Password)：设置密码框
+12. setEchoMode(QLineEdit::Password)：设置密码框
 
-10. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
+13. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
 
-11. setFocus()：设置光标显示位置
+14. setFocus()：设置光标显示位置
 
-12. 解决内存占用过多的问题：
+15. 解决内存占用过多的问题：
 
    **延迟加载（懒加载）** 
 
