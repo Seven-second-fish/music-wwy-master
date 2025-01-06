@@ -20,40 +20,11 @@
 
 视频：C++QT2024年最新版，QT5
 
-#### C++知识点：
 
-1. 命名空间：using namespace std;：允许在不显式指定std::的情况下使用std命名空间中的所有元素
 
-2. 内联函数：inline Function，通常用于优化小型、频繁调用的函数，比如add，max等
+book_qt_2
 
-3. Lambda表达式：
 
-   ```c
-   //捕获列表(Capture clause):用于捕获外部变量
-   //参数列表(Parameters):与普通函数的参数列表类似，可以为空或包含参数列表
-   //返回类型(Return type):默认auto，可以显示指定，如果只用一条返回语句，可以省略
-   //函数体(Body):包含需要执行的代码
-   
-   //如果捕获列表和参数列表都不为空，由返回值决定
-   //如果Capture clause不为引用&，函数体内不能对传入的数据进行改变
-   //如果Capture clause为=，表示捕获所有变量，不需要在列表中写明
-   [capture clause](parameters) -> return_type{
-   	//函数体
-       //可以使用捕获列表中的变量
-       return expression; //可选的返回语句
-   }
-   //记忆：[]()->type{}
-   ```
-
-4. 指针：用于实参和形参的区分等
-
-5. new和malloc：目前理解（new适用于C++,malloc适用于C）
-
-6. 字符串使用：string，头文件：#include <string>
-
-7. 字符串拼接：常用str = "new" + name + "year"；每个字符之间都要有变量
-
-8. ：：称为作用域解析运算符，用于指定一个成员(如函数或变量)属于特定的类或命名空间
 
 #### QT知识点：
 
@@ -89,13 +60,9 @@
    }
    ```
 
-5. 1
+5. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
 
-6. 
-
-7. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
-
-8. 主函数写法：
+6. 主函数写法：
 
    ```c++
    //固定形式
@@ -109,19 +76,19 @@
    }
    ```
 
-9. exec()退出函数
+7. exec()退出函数
 
-10. QMessageBox::warning，QMessageBox::Yes
+8. QMessageBox::warning，QMessageBox::Yes
 
-11. QDialog::Accepted
+9. QDialog::Accepted
 
-12. setEchoMode(QLineEdit::Password)：设置密码框
+10. setEchoMode(QLineEdit::Password)：设置密码框
 
-13. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
+11. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
 
-14. setFocus()：设置光标显示位置
+12. setFocus()：设置光标显示位置
 
-15. 解决内存占用过多的问题：
+13. 解决内存占用过多的问题：
 
    **延迟加载（懒加载）** 
 
@@ -264,4 +231,39 @@
 29. 交叉编译(makefile，mingw64，后续深入学习)
 
 30. Qt 绘制系统：QPainter
+
+31. QT事件：
+
+    ```c
+    //key键盘事件
+    #include <QKeyEvent>
+    void MainWindow::keyPressEvent(QKeyEvent *event)
+    {
+        //错误案例：k->key()只会返回一个键值
+        if(event->key() == Qt::Key_A && event->key() == Qt::Key_Control)
+        {
+            printf("%s","A");
+        }
+        //修正：
+        if (k->key() == Qt::Key_A && k->modifiers() == Qt::ControlModifier)
+        {
+            printf("%s", "A");
+        }
+    }
+    
+    //鼠标事件
+    #include <QMouseEvent>
+    void MainWindow::mousePressEvent(QMouseEvent *m)
+    {
+        QPoint pt = m->pos();
+        if(m->button() == Qt::LeftButton)
+        {
+            printf("%s","A");
+        }
+    }
+    ```
+
+    
+
+32. 
 
