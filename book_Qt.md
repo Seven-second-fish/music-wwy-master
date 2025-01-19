@@ -263,7 +263,82 @@ book_qt_2
     }
     ```
 
-    
 
 32. 
+=======
+32. TCP客户端
+
+    ```c
+    //需要连接Tcp服务器，阿里云服务器
+    
+    //.pro文件添加
+    QT += core gui network
+    //.h文件
+    #include <QTcpSocket>
+    #include <QHostAddress>
+    //.cpp
+    QTcpSocket *m_socket = new QTcpSocket;
+    QString IP = ui->label_s1->text();
+    QString port = ui->label_s2->text();
+    //连接服务器
+    m_socket->connectToHost(QHostAddress(IP),port.toShort());
+    //连接成功
+    connect(m_socket,&QTcpSocket::connected,[this](){
+        QMessageBox::information(this,"con","2");
+    });
+    //连接断开
+    connect(m_socket,&QTcpSocket::disconnected,[this](){
+        QMessageBox::information(this,"dis","0");
+    });
+    ```
+
+    
+
+33. TCP服务器
+
+    ```c
+    //.h文件
+    #include <QTcpServer>
+    //.cpp
+    QTcpServer *server = new QTcpServer;
+    //监听
+    server->listen(QHostAddress::AnyIPv4, PORT)
+    //客户端发起连接，server发出信号
+    connect(server,&QTcpServer:newConnection,this,&Widget::newClientHandler);
+    void Widget::newClientHandler()
+    {
+    	//建立TCP连接
+    	QTcpSocket *socket = server->nextPendingConnection()
+    	//socket->peerAddress();   //获取客户端地址
+    	//socket->peerPort();      //获取客户端的端口号
+    }
+    ```
+
+    
+
+34. 可以实现服务器和客户端交互，传递信息
+
+    ```
+    
+    ```
+
+    
+
+35. 遇到不会的函数，不确定放入什么参数，就按F1查询该函数，将对应的参数转换为对应形式的值放入
+
+36. 函数的默认参数要放在参数列表的后面
+
+37. 数值转换：需要研究
+
+    ```c
+    .toString() .toShort() .toInt() QString::number()
+    ```
+
+    
+
+38. Mysql数据库
+
+    
+
+39. 
 
