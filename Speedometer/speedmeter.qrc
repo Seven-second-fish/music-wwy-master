@@ -1,0 +1,17 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+     <qresource prefix="/">
+        <file>image/angle/sp1.png</file>
+        <file>image/angle/sp2.png</file>
+        <file>image/angle/sp3.png</file>
+        <file>image/angle/sp4.png</file>
+        <file>image/angle/sp5.png</file>
+        <file>image/angle/sp6.png</file>
+        <file>image/angle/sp7.png</file>
+        <file>image/angle/sp8.png</file>
+        <file>image/angle/ba1.png</file>
+        <file>image/angle/ba2.png</file>
+        <file>image/angle/ba3.png</file>
+        <file>image/angle/ba4.png</file>
+    </qresource>
+</RCC>
