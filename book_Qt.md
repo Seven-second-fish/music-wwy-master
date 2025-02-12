@@ -28,41 +28,194 @@ book_qt_2
 
 #### QT知识点：
 
-1. QObject定时器：int start_time = this->startTimer(3000);，this->killTimer(start_time);
+1. Qt 定时器使用指南：
 
-2. QTimer定时器：
+   ## 1. Qt 定时器简介
 
-   ```c
-   QTimer *start_timer = new QTimer()，
-   //每3秒钟调用一次timeroutslot函数：
-   connect(start_timer,&QTimer::timeout,this,&MainWindow::timeroutslot);
-   start_timer->start(3000)
-   start_timer->stop();
-   //等一秒钟后触发timeroutslot函数：
-   QTimer::singleShot(1000,this,SLOT(timeroutslot()))
-   ```
+   Qt 提供了多种定时器机制来执行定时任务，主要包括：
 
-3. 字符串拼接：ui->label_time->setText(QString("title%1").arg(num++));
+   - `QTimer`（最常用）
+   - `QBasicTimer`
+   - `QElapsedTimer`
+   - `QThread::msleep()` / `QThread::usleep()`
+   - `QTime`
 
-4. 文件功能：
+   ## 2. QTimer 详解
 
-   ```c++
-   QString filename = QFileDialog::getOpenFileName(this,"choose","path","*.cpp");
-   if(filename.isEmpty())
-   {
-       QMessageBox::waring(this,"警告"，"请选择一个文件")；
-   }else{
-       QFile file(filename);
-       file.open(QIODevice::ReadOnly);
-       QByteArray ba = file.readAll();
-       ui->textEdit->setText(QString(ba));
-       file.close();
+   ### 2.1 QTimer 基本用法
+
+   QTimer 是 Qt 中最常用的定时器，可以用来触发特定时间间隔的操作。
+
+   #### **示例 1：单次定时器**
+
+   ```cpp
+   #include <QCoreApplication>
+   #include <QTimer>
+   #include <QDebug>
+   
+   void timeoutHandler() {
+       qDebug() << "Timeout occurred!";
+   }
+   
+   int main(int argc, char *argv[]) {
+       QCoreApplication a(argc, argv);
+       QTimer::singleShot(2000, &timeoutHandler); // 2 秒后执行
+       return a.exec();
    }
    ```
 
-5. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+   #### **示例 2：周期性定时器**
 
-6. 主函数写法：
+   ```cpp
+   #include <QCoreApplication>
+   #include <QTimer>
+   #include <QDebug>
+   
+   class MyClass : public QObject {
+       Q_OBJECT
+   public:
+       MyClass() {
+           QTimer *timer = new QTimer(this);
+           connect(timer, &QTimer::timeout, this, &MyClass::onTimeout);
+           timer->start(1000); // 每 1 秒触发一次
+       }
+   
+   public slots:
+       void onTimeout() {
+           qDebug() << "Timer triggered!";
+       }
+   };
+   
+   int main(int argc, char *argv[]) {
+       QCoreApplication a(argc, argv);
+       MyClass obj;
+       return a.exec();
+   }
+   ```
+
+   ### 2.2 停止定时器
+
+   使用 `QTimer::stop()` 方法可以停止定时器。
+
+   ```cpp
+   timer->stop();
+   ```
+
+   ## 3. QBasicTimer
+
+   QBasicTimer 适用于对性能要求较高的场景，需要手动管理定时器事件。
+
+   ```cpp
+   #include <QCoreApplication>
+   #include <QBasicTimer>
+   #include <QTimerEvent>
+   #include <QDebug>
+   
+   class MyClass : public QObject {
+       Q_OBJECT
+       QBasicTimer timer;
+   
+   public:
+       void startTimer() {
+           timer.start(1000, this); // 1 秒触发一次
+       }
+   
+   protected:
+       void timerEvent(QTimerEvent *event) override {
+           if (event->timerId() == timer.timerId()) {
+               qDebug() << "Basic timer triggered!";
+           }
+       }
+   };
+   
+   int main(int argc, char *argv[]) {
+       QCoreApplication a(argc, argv);
+       MyClass obj;
+       obj.startTimer();
+       return a.exec();
+   }
+   ```
+
+   ## 4. QElapsedTimer
+
+   QElapsedTimer 用于高精度时间测量。
+
+   ```cpp
+   #include <QCoreApplication>
+   #include <QElapsedTimer>
+   #include <QDebug>
+   
+   int main(int argc, char *argv[]) {
+       QCoreApplication a(argc, argv);
+       QElapsedTimer timer;
+       timer.start();
+       // 执行一些任务
+       qint64 elapsed = timer.elapsed(); // 获取经过的毫秒数
+       qDebug() << "Elapsed time:" << elapsed << "ms";
+       return a.exec();
+   }
+   ```
+
+   ## 5. QTime 计时
+
+   `QTime` 类也可以用于测量时间间隔，适用于较低精度的需求。
+
+   ```cpp
+   #include <QCoreApplication>
+   #include <QTime>
+   #include <QDebug>
+   
+   int main(int argc, char *argv[]) {
+       QCoreApplication a(argc, argv);
+       QTime time;
+       time.start();
+       // 模拟耗时任务
+       QThread::sleep(1);
+       int elapsed = time.elapsed();
+       qDebug() << "Elapsed time:" << elapsed << "ms";
+       return a.exec();
+   }
+   ```
+
+   ## 6. 线程中的定时器
+
+   使用 `QThread::msleep()` 可以在线程中暂停执行。
+
+   ```cpp
+   #include <QThread>
+   #include <QDebug>
+   
+   class MyThread : public QThread {
+       void run() override {
+           qDebug() << "Thread started";
+           QThread::msleep(2000);
+           qDebug() << "Thread finished";
+       }
+   };
+   
+   int main() {
+       MyThread thread;
+       thread.start();
+       thread.wait();
+       return 0;
+   }
+   ```
+
+   ## 7. 总结
+
+   - `QTimer` 适用于大多数定时任务，支持单次和周期性触发。
+   - `QBasicTimer` 适用于性能要求高的场景。
+   - `QElapsedTimer` 适用于测量时间间隔。
+   - `QTime` 适用于低精度计时。
+   - `QThread::msleep()` 可用于线程休眠。
+
+   合理选择定时器可以提升 Qt 应用的性能和响应速度。
+
+2. 字符串拼接：ui->label_time->setText(QString("title%1").arg(num++));
+
+3. 尝试使用调试程序，多使用帮助文档Assistant(查找功能)
+
+4. 主函数写法：
 
    ```c++
    //固定形式
@@ -76,19 +229,19 @@ book_qt_2
    }
    ```
 
-7. exec()退出函数
+5. exec()退出函数
 
-8. QMessageBox::warning，QMessageBox::Yes
+6. QMessageBox::warning，QMessageBox::Yes
 
-9. QDialog::Accepted
+7. QDialog::Accepted
 
-10. setEchoMode(QLineEdit::Password)：设置密码框
+8. setEchoMode(QLineEdit::Password)：设置密码框
 
-11. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
+9. text().trimmed()：移除字符串开头和结尾的空白字符，tr()
 
-12. setFocus()：设置光标显示位置
+10. setFocus()：设置光标显示位置
 
-13. 解决内存占用过多的问题：
+11. 解决内存占用过多的问题：
 
    **延迟加载（懒加载）** 
 
@@ -264,65 +417,23 @@ book_qt_2
     ```
 
 
-32. 
-=======
 32. TCP客户端
 
     ```c
-    //需要连接Tcp服务器，阿里云服务器
     
-    //.pro文件添加
-    QT += core gui network
-    //.h文件
-    #include <QTcpSocket>
-    #include <QHostAddress>
-    //.cpp
-    QTcpSocket *m_socket = new QTcpSocket;
-    QString IP = ui->label_s1->text();
-    QString port = ui->label_s2->text();
-    //连接服务器
-    m_socket->connectToHost(QHostAddress(IP),port.toShort());
-    //连接成功
-    connect(m_socket,&QTcpSocket::connected,[this](){
-        QMessageBox::information(this,"con","2");
-    });
-    //连接断开
-    connect(m_socket,&QTcpSocket::disconnected,[this](){
-        QMessageBox::information(this,"dis","0");
-    });
     ```
-
-    
 
 33. TCP服务器
 
     ```c
-    //.h文件
-    #include <QTcpServer>
-    //.cpp
-    QTcpServer *server = new QTcpServer;
-    //监听
-    server->listen(QHostAddress::AnyIPv4, PORT)
-    //客户端发起连接，server发出信号
-    connect(server,&QTcpServer:newConnection,this,&Widget::newClientHandler);
-    void Widget::newClientHandler()
-    {
-    	//建立TCP连接
-    	QTcpSocket *socket = server->nextPendingConnection()
-    	//socket->peerAddress();   //获取客户端地址
-    	//socket->peerPort();      //获取客户端的端口号
-    }
-    ```
-
     
+    ```
 
 34. 可以实现服务器和客户端交互，传递信息
 
     ```
     
     ```
-
-    
 
 35. 遇到不会的函数，不确定放入什么参数，就按F1查询该函数，将对应的参数转换为对应形式的值放入
 
@@ -334,11 +445,324 @@ book_qt_2
     .toString() .toShort() .toInt() QString::number()
     ```
 
-    
-
 38. Mysql数据库
 
+    ```c
+    
+    ```
+
     
 
-39. 
+39. Qt 多线程开发指南
+
+    ## 1. 引言
+    在 Qt 进行多线程编程时，可以使用 `QThread` 直接继承或移动到新线程，也可以使用 `QRunnable` 结合 `QThreadPool` 进行轻量级任务管理。本指南将介绍 Qt 多线程的基础知识，并通过示例进行讲解。
+
+    ---
+
+    ## 2. 使用 QThread 继承方式
+
+    ### 2.1 QThread 介绍
+    `QThread` 是 Qt 提供的线程类，通常有两种使用方式：
+    - 继承 `QThread`，重写 `run()` 方法
+    - 继承 `QObject`，将对象移动到 `QThread`
+
+    ### 2.2 继承 QThread 实现线程
+    ```cpp
+    #include <QThread>
+    #include <QDebug>
+    
+    class MyThread : public QThread {
+    public:
+        void run() override {
+            for (int i = 0; i < 5; ++i) {
+                qDebug() << "Running in thread:" << QThread::currentThread();
+                QThread::sleep(1);
+            }
+        }
+    };
+    
+    int main() {
+        MyThread thread;
+        thread.start();
+        thread.wait();
+        return 0;
+    }
+    ```
+
+    ### 2.3 使用 QObject + QThread
+    ```cpp
+    #include <QCoreApplication>
+    #include <QThread>
+    #include <QDebug>
+    
+    class Worker : public QObject {
+        Q_OBJECT
+    public slots:
+        void process() {
+            for (int i = 0; i < 5; ++i) {
+                qDebug() << "Processing in thread:" << QThread::currentThread();
+                QThread::sleep(1);
+            }
+        }
+    };
+    
+    int main(int argc, char *argv[]) {
+        QCoreApplication a(argc, argv);
+        
+        QThread thread;
+        Worker worker;
+        worker.moveToThread(&thread);
+        
+        QObject::connect(&thread, &QThread::started, &worker, &Worker::process);
+        thread.start();
+        
+        return a.exec();
+    }
+    ```
+
+    ---
+
+    ## 3. 使用 QRunnable 和 QThreadPool
+
+    `QRunnable` 适用于短时间任务，结合 `QThreadPool` 进行管理。
+
+    ```cpp
+    #include <QRunnable>
+    #include <QThreadPool>
+    #include <QDebug>
+    
+    class MyTask : public QRunnable {
+    public:
+        void run() override {
+            qDebug() << "Task running in thread:" << QThread::currentThread();
+        }
+    };
+    
+    int main() {
+        QThreadPool::globalInstance()->start(new MyTask());
+        return 0;
+    }
+    ```
+
+    ---
+
+    ## 4. 线程间通信（信号与槽）
+    在多线程环境下，`Qt::QueuedConnection` 方式可用于线程间通信。
+
+    ```cpp
+    #include <QObject>
+    #include <QThread>
+    #include <QDebug>
+    
+    class Worker : public QObject {
+        Q_OBJECT
+    public slots:
+        void doWork() {
+            qDebug() << "Worker thread:" << QThread::currentThread();
+        }
+    };
+    
+    int main() {
+        QThread thread;
+        Worker worker;
+        worker.moveToThread(&thread);
+        QObject::connect(&thread, &QThread::started, &worker, &Worker::doWork);
+        thread.start();
+        return 0;
+    }
+    ```
+
+    ---
+
+    ## 5. 线程管理
+    ### 5.1 停止线程
+    使用 `requestInterruption()` 和 `isInterruptionRequested()` 进行线程终止。
+
+    ```cpp
+    class MyThread : public QThread {
+    public:
+        void run() override {
+            while (!isInterruptionRequested()) {
+                qDebug() << "Running...";
+                QThread::msleep(500);
+            }
+            qDebug() << "Thread stopped.";
+        }
+    };
+    
+    int main() {
+        MyThread thread;
+        thread.start();
+        QThread::sleep(2);
+        thread.requestInterruption();
+        thread.wait();
+        return 0;
+    }
+    ```
+
+    ---
+
+    ## 6. 结论
+    - `QThread` 适用于长期运行的线程
+    - `QRunnable` + `QThreadPool` 适用于短时间任务
+    - `moveToThread()` 提供更好的面向对象方式
+    - `Qt::QueuedConnection` 实现线程安全的信号槽通信
+
+    以上内容涵盖了 Qt 多线程的基础用法，可根据需求选择合适的方法。
+
+40. QT文件操作
+
+    ## 1. 引言
+    Qt 提供了 `QFile`、`QTextStream`、`QFileInfo`、`QDir` 等类用于文件操作，支持读取、写入、删除文件，以及操作目录。
+
+    ## 2. 读取文件内容
+    ### 2.1 逐行读取文本文件
+    ```cpp
+    #include <QFile>
+    #include <QTextStream>
+    #include <QDebug>
+    
+    void readFile(const QString &filePath) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qDebug() << "无法打开文件:" << file.errorString();
+            return;
+        }
+        
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            qDebug() << line;
+        }
+        file.close();
+    }
+    ```
+
+    ### 2.2 读取整个文件内容
+    ```cpp
+    void readWholeFile(const QString &filePath) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qDebug() << "无法打开文件:" << file.errorString();
+            return;
+        }
+        QTextStream in(&file);
+        qDebug() << in.readAll();
+        file.close();
+    }
+    ```
+
+    ## 3. 写入文件内容
+    ### 3.1 覆盖写入文件
+    ```cpp
+    void writeFile(const QString &filePath, const QString &content) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qDebug() << "无法打开文件:" << file.errorString();
+            return;
+        }
+        QTextStream out(&file);
+        out << content;
+        file.close();
+    }
+    ```
+
+    ### 3.2 追加写入文件
+    ```cpp
+    void appendToFile(const QString &filePath, const QString &content) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::Append | QIODevice::Text)) {
+            qDebug() << "无法打开文件:" << file.errorString();
+            return;
+        }
+        QTextStream out(&file);
+        out << content << "\n";
+        file.close();
+    }
+    ```
+
+    ## 4. 删除文件
+    ```cpp
+    void deleteFile(const QString &filePath) {
+        QFile file(filePath);
+        if (file.exists()) {
+            if (file.remove()) {
+                qDebug() << "文件删除成功";
+            } else {
+                qDebug() << "文件删除失败";
+            }
+        } else {
+            qDebug() << "文件不存在";
+        }
+    }
+    ```
+
+    ## 5. 目录操作
+    ### 5.1 创建目录
+    ```cpp
+    void createDirectory(const QString &dirPath) {
+        QDir dir;
+        if (dir.exists(dirPath)) {
+            qDebug() << "目录已存在";
+        } else {
+            if (dir.mkpath(dirPath)) {
+                qDebug() << "目录创建成功";
+            } else {
+                qDebug() << "目录创建失败";
+            }
+        }
+    }
+    ```
+
+    ### 5.2 遍历目录
+    ```cpp
+    void listFilesInDirectory(const QString &dirPath) {
+        QDir dir(dirPath);
+        if (!dir.exists()) {
+            qDebug() << "目录不存在";
+            return;
+        }
+        QStringList files = dir.entryList(QDir::Files);
+        foreach (QString file, files) {
+            qDebug() << file;
+        }
+    }
+    ```
+
+    ### 5.3 删除目录及其内容
+    ```cpp
+    void deleteDirectory(const QString &dirPath) {
+        QDir dir(dirPath);
+        if (dir.exists()) {
+            if (dir.removeRecursively()) {
+                qDebug() << "目录删除成功";
+            } else {
+                qDebug() << "目录删除失败";
+            }
+        } else {
+            qDebug() << "目录不存在";
+        }
+    }
+    ```
+
+    ## 6. 获取文件信息
+    ```cpp
+    void getFileInfo(const QString &filePath) {
+        QFileInfo fileInfo(filePath);
+        if (!fileInfo.exists()) {
+            qDebug() << "文件不存在";
+            return;
+        }
+        qDebug() << "文件名:" << fileInfo.fileName();
+        qDebug() << "文件路径:" << fileInfo.filePath();
+        qDebug() << "文件大小:" << fileInfo.size() << "字节";
+        qDebug() << "最后修改时间:" << fileInfo.lastModified().toString();
+    }
+    ```
+
+    ## 7. 结论
+    Qt 提供了丰富的文件操作接口，包括文件读取、写入、删除、目录操作等，使用 `QFile`、`QDir` 和 `QFileInfo` 可以方便地处理文件系统任务。
+
+41. 
 
