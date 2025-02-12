@@ -18,10 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     speeddemo.cpp \
+    speeddemo2.cpp \
     speedometer.cpp
 
 HEADERS += \
     speeddemo.h \
+    speeddemo2.h \
     speedometer.h
 
 FORMS += \

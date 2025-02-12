@@ -11,16 +11,19 @@
 #define SpeedometerTimer 200
 
 Speedometer::Speedometer(QWidget *parent)
-    : QWidget(parent), m_speed(0), m_maxSpeed(40), m_maxpowervalue(40),
+    : QWidget(parent), m_speed(0), m_maxSpeed(100), m_maxpowervalue(40),
       m_speedChanged(false),m_powervalueChanged(false)
 {
 //    setAngleImg();
     setMinimumSize(200, 200);
     SpeedometerTimerID = startTimer(SpeedometerTimer);
+//    initializeCache();
 
 //    m_speed = m_maxSpeed;
 
 //    m_powervalue = m_maxpowervalue;
+//    qDebug() << "Qt Version:" << QT_VERSION_STR;
+//    qDebug() << "Graphics backend: " << QGuiApplication::platformName();
 }
 
 Speedometer::~Speedometer()
@@ -102,6 +105,14 @@ void Speedometer::resizeEvent(QResizeEvent *event)
     m_labelsCached = false;
 }
 
+void Speedometer::initializeCache()
+{
+    QImage tempImage(10, 10, QImage::Format_ARGB32);
+    tempImage.fill(Qt::transparent);
+    m_arcCacheSpeed = QPixmap::fromImage(tempImage);
+    m_arcCachePower = QPixmap::fromImage(tempImage);
+}
+
 void Speedometer::setPainterViewport(QPainter &painter, int side)
 {
     painter.setViewport((width() - side) / 2, (height() - side) / 2, side, side);
@@ -116,14 +127,16 @@ void Speedometer::drawBackground(QPainter &painter)
     setPainterViewport(painter, side);
 
     //draw a line
-//    drawArc(painter, 95, -50.5, 280.0, 1.5, QColor(255, 100, 0));
+    drawArc(painter, 95, -50.5, 280.0, 1.5, QColor(255, 100, 0));
 
     painter.setOpacity(1.0);
 
     // for speed
     if (m_speedChanged) {
-        drawAngle(painter, m_speed, m_maxSpeed, 90, 100, -130, -170, 1);
+//        drawAngle(painter, m_speed, m_maxSpeed, 90, 100, -130, -170, 1);
 //        drawAngleImg(painter, m_speed, m_maxSpeed, 85, 95, 60.0, 170.0, 1);
+        drawAngle2(painter, m_speed, m_maxSpeed, 90, 100, 60.0, 170.0, 1);
+//        drawAngleImg2(painter,m_speed, m_maxSpeed,1);
         m_speedChanged = false;
     }
 
@@ -131,6 +144,8 @@ void Speedometer::drawBackground(QPainter &painter)
     if (m_powervalueChanged) {
         drawAngle(painter, m_powervalue, m_maxpowervalue, 90, 100, -51, 88, 2);
 //        drawAngleImg(painter, m_powervalue, m_maxpowervalue, 90, 100, -50, 88, 2);
+//        drawAngle2(painter, m_powervalue, m_maxpowervalue, 90, 100, -51, 88, 2);
+//        drawAngleImg2(painter,m_powervalue, m_maxpowervalue,2);
         m_powervalueChanged = false;
     }
 
@@ -169,7 +184,7 @@ void Speedometer::updateArcCache(int outerRadius, int innerRadius, int counter, 
     {
 //        qreal currentAngle = startAngle + i * anglePerSegment;
         if(counter == 1){  //left
-            currentAngle = startAngle + spanAngle - i * anglePerSegment - anglePerSegment;
+            currentAngle = startAngle + spanAngle - (i + 1) * anglePerSegment;
         }else if(counter == 2){  //right
             currentAngle = startAngle + i * anglePerSegment;
         }
@@ -196,15 +211,16 @@ void Speedometer::updateArcCache(int outerRadius, int innerRadius, int counter, 
     }
 
     painter.drawPath(combinedPath);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
 
     if (counter == 1) m_speedCacheDirty = false;
     if (counter == 2) m_powerCacheDirty = false;
     painter.restore();
     qDebug()<<__FUNCTION__<<__LINE__;
 }
-
-
-
 
 void Speedometer::drawAngle(QPainter &painter, qreal value, qreal maxValue,
                             int innerRadius, int outerRadius, qreal startAngle, qreal spanAngle,
@@ -229,7 +245,12 @@ void Speedometer::drawAngle(QPainter &painter, qreal value, qreal maxValue,
     clipPath.arcTo(innerRect, startAngle + filledAngle, -filledAngle);
 
     painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
     painter.setClipPath(clipPath);
+//    painter.setClipRegion(clipPath.toFillPolygon().toPolygon());
 
     QPixmap *arcCache = nullptr;
 
@@ -242,16 +263,20 @@ void Speedometer::drawAngle(QPainter &painter, qreal value, qreal maxValue,
         int size = arcCache->width();
 
         if (size > 0) {
-            painter.drawPixmap(-size / 2, -size / 2, *arcCache);
+//            painter.drawPixmap(-size / 2, -size / 2, *arcCache);
+
+            QImage cacheImage = arcCache->toImage().convertToFormat(QImage::Format_ARGB32);
+            QPixmap smoothPixmap = QPixmap::fromImage(cacheImage);
+
+            painter.drawPixmap(-size / 2, -size / 2, smoothPixmap);
+
+            painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            painter.fillPath(clipPath, QColor(0, 0, 0, 255));
         }
     }
 
     painter.restore();
 }
-
-
-
-
 
 void Speedometer::drawAngleImg(QPainter &painter, qreal value, qreal maxValue,
                                int innerRadius, int outerRadius, qreal startAngle, qreal spanAngle, int counter)
@@ -314,60 +339,57 @@ void Speedometer::drawAngleImg(QPainter &painter, qreal value, qreal maxValue,
     }
 }
 
+void Speedometer::drawAngle2(QPainter &painter, qreal value, qreal maxValue,
+                            int innerRadius, int outerRadius, qreal startAngle, qreal spanAngle,
+                            int counter)
+{
+    int numSegments = 300;
 
+//    qreal ratio = qBound(0.0, value / maxValue, 1.0);
+    qreal ratio = qBound(qreal(0.0), value / maxValue, qreal(1.0));
+    qreal filledAngle = spanAngle * ratio;
+    qreal anglePerSegment = spanAngle / numSegments;
 
-//void Speedometer::drawAngle(QPainter &painter, qreal value, qreal maxValue,
-//                            int innerRadius, int outerRadius, qreal startAngle, qreal spanAngle,
-//                            int counter)
-//{
-//    int numSegments = 300;
+    QPainterPath combinedPath;
 
-////    qreal ratio = qBound(0.0, value / maxValue, 1.0);
-//    qreal ratio = qBound(qreal(0.0), value / maxValue, qreal(1.0));
-//    qreal filledAngle = spanAngle * ratio;
-//    qreal anglePerSegment = spanAngle / numSegments;
+    qreal currentAngle = 0;
 
-//    QPainterPath combinedPath;
+    for (int i = 0; i < numSegments; ++i)
+    {
+        if(counter == 1){  //left
+            currentAngle = startAngle + spanAngle - i * anglePerSegment - anglePerSegment;
+        }else if(counter == 2){  //right
+            currentAngle = startAngle + i * anglePerSegment;
+        }
 
-//    qreal currentAngle = 0;
+        if (i * anglePerSegment >= filledAngle)
+            break;
 
-//    for (int i = 0; i < numSegments; ++i)
-//    {
-//        if(counter == 1){  //left
-//            currentAngle = startAngle + spanAngle - i * anglePerSegment - anglePerSegment;
-//        }else if(counter == 2){  //right
-//            currentAngle = startAngle + i * anglePerSegment;
-//        }
+        qreal position = static_cast<qreal>(i) / numSegments;
+        QColor color;
 
-//        if (i * anglePerSegment >= filledAngle)
-//            break;
+        if(counter == 1){  //left
+//            color = QColor::fromHsvF((1.0 - position) * 0.4, 1.0, 1.0);
+            color = QColor::fromHsvF(0.0 + position * 0.083, 1.0, 1.0);
+        }else if(counter == 2){  //right
+            color = QColor::fromHsvF(0.33, 1.0, 0.5 + position * 0.5);
 
-//        qreal position = static_cast<qreal>(i) / numSegments;
-//        QColor color;
+//            color = fixedColor.isValid() ? fixedColor : Qt::white;
+        }
 
-//        if(counter == 1){  //left
-////            color = QColor::fromHsvF((1.0 - position) * 0.4, 1.0, 1.0);
-//            color = QColor::fromHsvF(0.0 + position * 0.083, 1.0, 1.0);
-//        }else if(counter == 2){  //right
-//            color = QColor::fromHsvF(0.33, 1.0, 0.5 + position * 0.5);
+        QPainterPath segment;
+        segment.moveTo(0, 0);
+        segment.arcTo(-outerRadius, -outerRadius, 2 * outerRadius, 2 * outerRadius, currentAngle, -anglePerSegment);
+        segment.arcTo(-innerRadius, -innerRadius, 2 * innerRadius, 2 * innerRadius, currentAngle - anglePerSegment, anglePerSegment);
+        segment.closeSubpath();
+        combinedPath.addPath(segment);
 
-////            color = fixedColor.isValid() ? fixedColor : Qt::white;
-//        }
+        painter.setBrush(color);
+        painter.setPen(Qt::NoPen);
+    }
 
-//        QPainterPath segment;
-//        segment.moveTo(0, 0);
-//        segment.arcTo(-outerRadius, -outerRadius, 2 * outerRadius, 2 * outerRadius, currentAngle, -anglePerSegment);
-//        segment.arcTo(-innerRadius, -innerRadius, 2 * innerRadius, 2 * innerRadius, currentAngle - anglePerSegment, anglePerSegment);
-//        segment.closeSubpath();
-//        combinedPath.addPath(segment);
-
-//        painter.setBrush(color);
-//        painter.setPen(Qt::NoPen);
-//    }
-
-//    painter.drawPath(combinedPath);
-//}
-
+    painter.drawPath(combinedPath);
+}
 
 void Speedometer::drawLabels(QPainter &painter)
 {
@@ -432,42 +454,89 @@ void Speedometer::drawTicks(QPainter &painter, int numTicks, qreal startAngle, q
     }
 }
 
+//be used
+
+//void Speedometer::drawAngleImg2(qreal value, qreal maxValue, int counter)
+//{
+//    SpBackgroundImage *speedRing = this->findChild<SpBackgroundImage *>("speedRing");
+//    SpBackgroundImage *battaryRing = this->findChild<SpBackgroundImage *>("battaryRing");
+
+//    int totalSegments = (counter == 1) ? 8 : 4;
+////    int index = std::round(value / maxValue * (totalSegments - 1)) + 1;
+//    int index = qBound(1, static_cast<int>(std::round(value / maxValue * (totalSegments - 1))) + 1, totalSegments);
+
+//    qDebug()<<__FUNCTION__<<__LINE__<<"              index="<<index;
+
+//    if (speedRing) {
+//        QString speedImagePath = QString(":/home_images/infopage/angle/speed%1.png").arg(index);
+//        QPixmap speedPixmap(speedImagePath);
+//        if (!speedPixmap.isNull()) {
+//            speedRing->setPixmap(speedPixmap);
+//            speedRing->update();
+//        } else {
+//            qWarning() << "Failed to load speed image at path:" << speedImagePath;
+//        }
+//    }
+
+//    if (battaryRing) {
+//        QString batteryImagePath = QString(":/home_images/infopage/angle/battary%1.png").arg(index);
+//        QPixmap batteryPixmap(batteryImagePath);
+//        if (!batteryPixmap.isNull()) {
+//            battaryRing->setPixmap(batteryPixmap);
+//            battaryRing->update();
+//        } else {
+//            qWarning() << "Failed to load battery image at path:" << batteryImagePath;
+//        }
+//    }
+//}
+
 
 void Speedometer::timerEvent(QTimerEvent *e)
 {
     static int i = 0;
     static int j = 0;
-    static bool status = false;
+    static bool speedIncreasing = true;
+    static bool powerIncreasing = true;
     int updatespeed = 1;
     int updatepower = 1;
 
     if (e->timerId() == SpeedometerTimerID)
     {
-        if (!status)
+        if (speedIncreasing)
         {
             i += updatespeed;
-            if (i >= m_maxSpeed && j >= m_maxpowervalue)
+            if (i >= m_maxSpeed)
             {
                 i = m_maxSpeed;
-                status = true;
-            }
-
-            j += updatepower;
-            if (i >= m_maxSpeed && j >= m_maxpowervalue)
-            {
-                j = m_maxpowervalue;
-                status = true;
+                speedIncreasing = false;
             }
         }
         else
         {
             i -= updatespeed;
-            j -= updatepower;
             if (i <= 0)
             {
                 i = 0;
+                speedIncreasing = true;
+            }
+        }
+
+        if (powerIncreasing)
+        {
+            j += updatepower;
+            if (j >= m_maxpowervalue)
+            {
+                j = m_maxpowervalue;
+                powerIncreasing = false;
+            }
+        }
+        else
+        {
+            j -= updatepower;
+            if (j <= 0)
+            {
                 j = 0;
-                status = false;
+                powerIncreasing = true;
             }
         }
 
@@ -475,6 +544,7 @@ void Speedometer::timerEvent(QTimerEvent *e)
         setPowerValue(j);
     }
 }
+
 
 void Speedometer::mousePressEvent(QMouseEvent *event)
 {

@@ -24,10 +24,14 @@ public:
     void drawArc(QPainter &painter, int radius, qreal startAngle, qreal spanAngle, double width, QColor color);
     void drawAngle(QPainter &painter, qreal value, qreal maxValue, int innerRadius, int outerRadius,
                    qreal startAngle, qreal spanAngle, int counter);
+    void drawAngle2(QPainter &painter, qreal value, qreal maxValue, int innerRadius, int outerRadius,
+                   qreal startAngle, qreal spanAngle, int counter);
     void setAngleImg();
     void drawAngleImg(QPainter &painter, qreal value, qreal maxValue,int innerRadius, int outerRadius,
                       qreal startAngle, qreal spanAngle,int counter);
     void updateArcCache(int outerRadius, int innerRadius, int counter, qreal startAngle, qreal spanAngle);
+
+    void drawAngleImg2(QPainter &painter, qreal value, qreal maxValue, int counter);
 
 
 protected:
