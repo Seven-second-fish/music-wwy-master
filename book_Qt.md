@@ -1125,7 +1125,7 @@ Access denied for user 'root'@'localhost'
 
 ------
 
-### **总结**
+### **6. 总结**
 
 - **安装 MySQL 驱动**（`libqt5sql5-mysql` / `qsqlmysql.dll`）。
 - **在 Qt 项目中配置 `.pro` 文件**。
@@ -1133,7 +1133,192 @@ Access denied for user 'root'@'localhost'
 - **在 `QTableView` 中显示 MySQL 数据**。
 - **排查 `QMYSQL` 驱动问题和数据库权限问题**。
 
+## 模型/视图编程（Model/View Programming）
 
+Qt 提供了一套强大的 **Model/View** 体系来管理和显示数据，主要组件包括：
+
+- **QAbstractItemModel**（抽象模型基类）
+- **QAbstractListModel / QAbstractTableModel / QAbstractItemModel**（具体实现）
+- **QListView / QTableView / QTreeView**（视图类）
+- **QItemDelegate**（自定义委托）
+- **QSortFilterProxyModel**（数据过滤与排序）
+
+### 1.1 简单示例：自定义 ListModel
+
+```cpp
+#include <QAbstractListModel>
+
+class SimpleListModel : public QAbstractListModel {
+    Q_OBJECT
+public:
+    explicit SimpleListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {
+        dataList = {"Item 1", "Item 2", "Item 3"};
+    }
+
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override {
+        return dataList.size();
+    }
+
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override {
+        if (!index.isValid() || index.row() >= dataList.size())
+            return QVariant();
+        
+        if (role == Qt::DisplayRole)
+            return dataList.at(index.row());
+        
+        return QVariant();
+    }
+
+private:
+    QStringList dataList;
+};
+```
+
+### 1.2 使用代理模型进行排序
+
+```cpp
+QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel;
+proxyModel->setSourceModel(model);
+proxyModel->sort(0);
+view->setModel(proxyModel);
+```
+
+---
+
+## 图形视图框架（Graphics View Framework）
+
+Qt 的 **QGraphicsView** 提供了一个高效的 2D 图形框架，主要包括：
+
+- **QGraphicsScene**（场景，管理图形项）
+- **QGraphicsView**（视图，显示场景内容）
+- **QGraphicsItem**（图形项）
+- **QGraphicsPixmapItem**（显示图片）
+- **QGraphicsTextItem**（显示文本）
+- **QGraphicsEllipseItem / QGraphicsRectItem / QGraphicsLineItem**（基本形状）
+
+### 2.1 基本示例：绘制矩形
+
+```cpp
+#include <QApplication>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QGraphicsRectItem>
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+    
+    QGraphicsScene scene;
+    QGraphicsRectItem *rect = scene.addRect(0, 0, 100, 50);
+    rect->setBrush(Qt::blue);
+    
+    QGraphicsView view(&scene);
+    view.show();
+    
+    return app.exec();
+}
+```
+
+### 2.2 添加图片
+
+```cpp
+QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(QPixmap("image.png"));
+scene.addItem(pixmapItem);
+```
+
+---
+
+## 图像处理（Image Processing）
+
+Qt 提供 **QImage、QPixmap、QPainter** 进行图像处理，常见操作包括：
+
+- **加载 & 保存图片（QImage::load, save）**
+- **调整大小（QImage::scaled）**
+- **灰度化（QImage::convertToFormat）**
+- **绘制图像（QPainter）**
+
+### 3.1 读取 & 保存图片
+
+```cpp
+QImage image("image.png");
+image.save("output.jpg", "JPG");
+```
+
+### 3.2 调整大小
+
+```cpp
+QImage resizedImage = image.scaled(200, 200, Qt::KeepAspectRatio);
+```
+
+### 3.3 旋转图片
+
+```cpp
+QTransform transform;
+transform.rotate(90);
+QImage rotatedImage = image.transformed(transform);
+```
+
+### 3.4 在图片上绘制文字
+
+```cpp
+QPainter painter(&image);
+painter.setFont(QFont("Arial", 20));
+painter.setPen(Qt::red);
+painter.drawText(image.rect(), Qt::AlignCenter, "Hello, Qt!");
+painter.end();
+image.save("output.png");
+```
+
+---
+
+## 动画与过渡效果（Animations & Transitions）
+
+Qt 的动画框架基于 **QPropertyAnimation**、**QGraphicsItemAnimation**、**QParallelAnimationGroup**，常见动画包括：
+
+- **移动动画（QPropertyAnimation::setStartValue, setEndValue）**
+- **缩放动画（QGraphicsItem::setScale）**
+- **旋转动画（QGraphicsItem::setRotation）**
+- **透明度动画（QGraphicsOpacityEffect）**
+
+### 4.1 移动动画
+
+```cpp
+#include <QPropertyAnimation>
+
+QPushButton *button = new QPushButton("Move");
+button->show();
+
+QPropertyAnimation *animation = new QPropertyAnimation(button, "geometry");
+animation->setDuration(1000);
+animation->setStartValue(QRect(0, 0, 100, 30));
+animation->setEndValue(QRect(200, 200, 100, 30));
+animation->start();
+```
+
+### 4.2 透明度动画
+
+```cpp
+#include <QGraphicsOpacityEffect>
+
+QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(button);
+button->setGraphicsEffect(effect);
+
+QPropertyAnimation *fade = new QPropertyAnimation(effect, "opacity");
+fade->setDuration(1500);
+fade->setStartValue(1.0);
+fade->setEndValue(0.0);
+fade->start();
+```
+
+### 4.3 旋转动画
+
+```cpp
+QGraphicsItem *item = new QGraphicsRectItem(0, 0, 50, 50);
+QPropertyAnimation *rotateAnim = new QPropertyAnimation(item, "rotation");
+rotateAnim->setDuration(2000);
+rotateAnim->setStartValue(0);
+rotateAnim->setEndValue(360);
+rotateAnim->start();
+```
 
 ## 小知识点
 
