@@ -223,11 +223,11 @@ int main() {
 
 合理选择定时器可以提升 Qt 应用的性能和响应速度。
 
-## 2. 信号与槽
+## 信号与槽
 
 Qt 的信号与槽机制是一种用于对象间通信的机制，类似于观察者模式。信号（Signal）在特定事件发生时发出，槽（Slot）是用于响应信号的函数。
 
-### 1.1 基本用法
+### 1. 基本用法
 
 信号与槽的连接通过 `QObject::connect` 方法完成，可以连接 Qt 提供的信号，也可以连接自定义信号。
 
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### 1.2 自定义信号与槽
+### 2. 自定义信号与槽
 
 可以通过 `signals` 关键字定义信号，并通过 `slots` 关键字定义槽。
 
@@ -290,24 +290,24 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### 1.3 连接多个信号与槽
+### 3. 连接多个信号与槽
 
 ```cpp
 connect(sender, &SenderClass::signal1, receiver, &ReceiverClass::slot1);
 connect(sender, &SenderClass::signal2, receiver, &ReceiverClass::slot2);
 ```
 
-### 1.4 断开信号与槽
+### 4. 断开信号与槽
 
 ```cpp
 disconnect(sender, &SenderClass::signal1, receiver, &ReceiverClass::slot1);
 ```
 
-## 3.事件循环与事件处理
+## 事件循环与事件处理
 
 Qt 的事件循环是基于 `QEventLoop` 实现的，`QApplication::exec()` 进入主事件循环，处理 GUI 事件。
 
-### 2.1 事件处理机制
+### 1. 事件处理机制
 
 Qt 事件系统基于 `QEvent`，每个窗口组件都能接收和处理事件。
 
@@ -346,7 +346,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### 2.2 事件过滤器
+### 2. 事件过滤器
 
 使用 `installEventFilter` 可以在对象级别拦截事件。
 
@@ -373,11 +373,11 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-## 4.布局管理器
+## 布局管理器
 
 Qt 提供 `QVBoxLayout`、`QHBoxLayout`、`QGridLayout`、`QFormLayout` 等布局管理器。
 
-### 3.1 使用 `QVBoxLayout`
+### 1. 使用 `QVBoxLayout`
 
 ```cpp
 #include <QApplication>
@@ -398,7 +398,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### 3.2 使用 `QGridLayout`
+### 2. 使用 `QGridLayout`
 
 ```cpp
 #include <QGridLayout>
@@ -419,52 +419,52 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-1. 自定义控件
+## 自定义控件
 
-   ### 4.1 继承 `QWidget` 进行绘制
+### 1. 继承 `QWidget` 进行绘制
 
-   可以重写 `paintEvent` 方法，使用 `QPainter` 进行绘制。
+可以重写 `paintEvent` 方法，使用 `QPainter` 进行绘制。
 
-   ```cpp
-   #include <QApplication>
-   #include <QWidget>
-   #include <QPainter>
-   
-   class CustomWidget : public QWidget {
-   protected:
-       void paintEvent(QPaintEvent *) override {
-           QPainter painter(this);
-           painter.setBrush(Qt::blue);
-           painter.drawRect(10, 10, 100, 100);
-       }
-   };
-   
-   int main(int argc, char *argv[]) {
-       QApplication app(argc, argv);
-       CustomWidget widget;
-       widget.show();
-       return app.exec();
-   }
-   ```
+```cpp
+#include <QApplication>
+#include <QWidget>
+#include <QPainter>
 
-   ### 4.2 自定义按钮控件
+class CustomWidget : public QWidget {
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter painter(this);
+        painter.setBrush(Qt::blue);
+        painter.drawRect(10, 10, 100, 100);
+    }
+};
 
-   ```cpp
-   #include <QPushButton>
-   #include <QPainter>
-   class CustomButton : public QPushButton {
-       Q_OBJECT
-   public:
-       CustomButton(const QString &text, QWidget *parent = nullptr) : QPushButton(text, parent) {}
-   protected:
-       void paintEvent(QPaintEvent *) override {
-           QPainter painter(this);
-           painter.setBrush(Qt::red);
-           painter.drawRect(rect());
-           painter.drawText(rect(), Qt::AlignCenter, text());
-       }
-   };
-   ```
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+    CustomWidget widget;
+    widget.show();
+    return app.exec();
+}
+```
+
+### 2. 自定义按钮控件
+
+```cpp
+#include <QPushButton>
+#include <QPainter>
+class CustomButton : public QPushButton {
+    Q_OBJECT
+public:
+    CustomButton(const QString &text, QWidget *parent = nullptr) : QPushButton(text, parent) {}
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter painter(this);
+        painter.setBrush(Qt::red);
+        painter.drawRect(rect());
+        painter.drawText(rect(), Qt::AlignCenter, text());
+    }
+};
+```
 
 
 ## Qt 多线程开发指南
@@ -992,7 +992,7 @@ sudo apt install libqt6sql6-mysql # Qt 6
 
 ### **2. 在 Qt 项目中使用 MySQL**
 
-#### **（1）. pro 文件配置**
+#### **2.1 pro 文件配置**
 
 在 `.pro` 文件中添加 SQL 模块支持：
 
@@ -1000,7 +1000,7 @@ sudo apt install libqt6sql6-mysql # Qt 6
 QT += sql
 ```
 
-#### **（2）. 代码示例**
+#### **2.2 代码示例**
 
 以下是 **Qt 连接 MySQL** 并执行查询的示例代码：
 
@@ -1057,13 +1057,13 @@ int main(int argc, char *argv[]) {
 
 ### **3. 在 Qt UI 中显示 MySQL 数据**
 
-#### **（1）. 在 Qt Designer 中添加控件**
+#### **3.1 在 Qt Designer 中添加控件**
 
 - 打开 Qt Designer。
 - 添加一个 `QTableView` 控件到 UI 界面。
 - 在代码中获取 `QTableView` 组件的对象。
 
-#### **（2）. 使用 `QSqlTableModel` 绑定数据**
+#### **3.2 使用 `QSqlTableModel` 绑定数据**
 
 ```cpp
 #include <QSqlTableModel>
@@ -1079,19 +1079,19 @@ void showDataInTableView(QTableView *tableView) {
 
 ### **4. 运行程序**
 
-#### **（1）. 启动 MySQL 服务器**
+#### **4.1 启动 MySQL 服务器**
 
 ```bash
 sudo systemctl start mysql
 ```
 
-#### **（2）. 运行 Qt 项目**
+#### **4.2 运行 Qt 项目**
 
 编译并运行 Qt 代码，观察终端输出。
 
 ### **5. 可能遇到的问题及解决方案**
 
-#### **（1）. 无法加载 QMYSQL 驱动**
+#### **5.1 无法加载 QMYSQL 驱动**
 
 **错误信息：**
 
@@ -1104,7 +1104,7 @@ QSqlDatabase: QMYSQL driver not loaded
 1. 确保已安装 `libqt5sql5-mysql`（Linux）或 `qsqlmysql.dll`（Windows）。
 2. 确保 `mysqlclient.dll` 或 `libmysqlclient.so` 在 `PATH` 环境变量中。
 
-#### **（2）. 连接失败（认证方式问题）**
+#### **5.2 连接失败（认证方式问题）**
 
 **错误信息：**
 
@@ -1143,7 +1143,7 @@ Qt 提供了一套强大的 **Model/View** 体系来管理和显示数据，主�
 - **QItemDelegate**（自定义委托）
 - **QSortFilterProxyModel**（数据过滤与排序）
 
-### 1.1 简单示例：自定义 ListModel
+### 1. 简单示例：自定义 ListModel
 
 ```cpp
 #include <QAbstractListModel>
@@ -1174,7 +1174,7 @@ private:
 };
 ```
 
-### 1.2 使用代理模型进行排序
+### 2. 使用代理模型进行排序
 
 ```cpp
 QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel;
@@ -1196,7 +1196,7 @@ Qt 的 **QGraphicsView** 提供了一个高效的 2D 图形框架，主要包括
 - **QGraphicsTextItem**（显示文本）
 - **QGraphicsEllipseItem / QGraphicsRectItem / QGraphicsLineItem**（基本形状）
 
-### 2.1 基本示例：绘制矩形
+### 1. 基本示例：绘制矩形
 
 ```cpp
 #include <QApplication>
@@ -1218,7 +1218,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-### 2.2 添加图片
+### 2. 添加图片
 
 ```cpp
 QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(QPixmap("image.png"));
@@ -1236,20 +1236,20 @@ Qt 提供 **QImage、QPixmap、QPainter** 进行图像处理，常见操作包�
 - **灰度化（QImage::convertToFormat）**
 - **绘制图像（QPainter）**
 
-### 3.1 读取 & 保存图片
+### 1. 读取 & 保存图片
 
 ```cpp
 QImage image("image.png");
 image.save("output.jpg", "JPG");
 ```
 
-### 3.2 调整大小
+### 2. 调整大小
 
 ```cpp
 QImage resizedImage = image.scaled(200, 200, Qt::KeepAspectRatio);
 ```
 
-### 3.3 旋转图片
+### 3. 旋转图片
 
 ```cpp
 QTransform transform;
@@ -1257,7 +1257,7 @@ transform.rotate(90);
 QImage rotatedImage = image.transformed(transform);
 ```
 
-### 3.4 在图片上绘制文字
+### 4. 在图片上绘制文字
 
 ```cpp
 QPainter painter(&image);
@@ -1279,7 +1279,7 @@ Qt 的动画框架基于 **QPropertyAnimation**、**QGraphicsItemAnimation**、*
 - **旋转动画（QGraphicsItem::setRotation）**
 - **透明度动画（QGraphicsOpacityEffect）**
 
-### 4.1 移动动画
+### 1. 移动动画
 
 ```cpp
 #include <QPropertyAnimation>
@@ -1294,7 +1294,7 @@ animation->setEndValue(QRect(200, 200, 100, 30));
 animation->start();
 ```
 
-### 4.2 透明度动画
+### 2. 透明度动画
 
 ```cpp
 #include <QGraphicsOpacityEffect>
@@ -1309,7 +1309,7 @@ fade->setEndValue(0.0);
 fade->start();
 ```
 
-### 4.3 旋转动画
+### 3. 旋转动画
 
 ```cpp
 QGraphicsItem *item = new QGraphicsRectItem(0, 0, 50, 50);
